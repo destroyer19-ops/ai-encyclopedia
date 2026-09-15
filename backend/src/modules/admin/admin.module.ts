@@ -5,9 +5,10 @@ import { Module } from '@nestjs/common';
 import { AdminUploadsController } from './admin-uploads.controller.js';
 import { AdminUploadsService } from './admin-uploads.service.js';
 import { S3Service } from '../../integrations/s3.service.js';
+import { AuthModule } from '../auth/auth.module.js';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, AuthModule],
   controllers: [AdminCourseController, AdminUploadsController],
   providers: [adminCourseServices, AdminUploadsService, S3Service],
 })
