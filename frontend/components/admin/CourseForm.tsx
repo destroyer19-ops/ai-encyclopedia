@@ -15,6 +15,8 @@ const courseSchema = z.object({
   persona: z.enum(["youth", "parents", "educators", "trainers"]),
   category: z.string().min(2, "Category is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
+  imageUrl: z.string().optional().or(z.literal("")),
+  ecardUrl: z.string().optional().or(z.literal("")),
 });
 
 type CourseFormValues = z.infer<typeof courseSchema>;
@@ -101,6 +103,24 @@ export function CourseForm() {
               className={errors.category ? "border-red-500" : ""}
             />
             {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category.message}</p>}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Course Image URL</label>
+            <Input 
+              {...register("imageUrl")} 
+              placeholder="https://..." 
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">E-Card/Certificate URL</label>
+            <Input 
+              {...register("ecardUrl")} 
+              placeholder="https://..." 
+            />
           </div>
         </div>
 

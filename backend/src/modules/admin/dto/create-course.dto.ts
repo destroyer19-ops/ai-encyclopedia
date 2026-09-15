@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEnum, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, MaxLength, IsOptional } from 'class-validator';
 
 export class CreateCourseDto {
   @IsString()
@@ -21,4 +21,12 @@ export class CreateCourseDto {
   @IsString()
   @MaxLength(1000)
   description: string;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  ecardUrl?: string;
 }

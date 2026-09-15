@@ -232,6 +232,8 @@ export interface ApiCourse {
   persona: string;
   category: string;
   description: string;
+  imageUrl?: string;
+  ecardUrl?: string;
   status: "draft" | "published";
   modulesCount?: number;
   durationMinutes?: number;
@@ -281,6 +283,8 @@ export interface CreateCoursePayload {
   persona: string;
   category: string;
   description: string;
+  imageUrl?: string;
+  ecardUrl?: string;
 }
 
 export interface CreateModulePayload {

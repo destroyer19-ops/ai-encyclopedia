@@ -29,6 +29,8 @@ model Course {
   title       String
   category    String
   description String       @db.Text
+  imageUrl    String?
+  ecardUrl    String?
   status      String       @default("draft") // "draft" | "published"
   modules     Module[]
   enrollments Enrollment[]
