@@ -6,9 +6,10 @@ import { AdminUploadsController } from './admin-uploads.controller.js';
 import { AdminUploadsService } from './admin-uploads.service.js';
 import { S3Service } from '../../integrations/s3.service.js';
 import { AuthModule } from '../auth/auth.module.js';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, AuthModule, PassportModule],
   controllers: [AdminCourseController, AdminUploadsController],
   providers: [adminCourseServices, AdminUploadsService, S3Service],
 })
