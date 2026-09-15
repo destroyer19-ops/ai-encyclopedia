@@ -11,11 +11,11 @@ import { EnrollmentsModule } from './modules/enrollments/enrollments.module.js';
 
 @Module({
   imports: [
+    AuthModule,
     PrismaModule,
     CoursesModule,
     ModulesModule,
     AdminModule,
-    AuthModule,
     UsersModule,
     EnrollmentsModule,
   ],
