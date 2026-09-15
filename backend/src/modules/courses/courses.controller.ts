@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { CoursesService } from './courses.service.js';
 import { QueryCoursesDto } from './dto/query-courses.dto.js';
+import { Public } from '../../common/decorators/public.decorator.js';
 
 // The @Controller('courses') decorator tells Nest that this class handles
 // all requests that begin with "/courses" (e.g. GET /courses)
@@ -10,10 +11,13 @@ export class CoursesController {
   constructor(private readonly coursesService: CoursesService) {}
 
   // The @Get() decorator binds this method to a GET request on "/courses"
+  @Public()
   @Get()
   async getAllCourses(@Query() query: QueryCoursesDto) {
     return this.coursesService.findAll(query);
   }
+
+  @Public()
   @Get(':persona/:slug')
   async getCourseBySlug(
     @Param('persona') persona: string,
