@@ -3,7 +3,7 @@
 ## Stack
 
 - **Framework**: NestJS (TypeScript) — chosen over raw Express for built-in module structure, DI, and validation pipes, which pays off once you add the forum, chatbot, admin, and analytics modules
-- **Database**: PostgreSQL via Prisma ORM
+- **Database**: MySQL via Prisma ORM
 - **Auth**: Passport.js strategies (Google OAuth, local) + JWT sessions
 - **Storage**: S3-compatible client (AWS SDK v3, works with DigitalOcean Spaces or AWS S3)
 - **Validation**: class-validator / class-transformer (native to Nest)
@@ -261,8 +261,8 @@ Handles numbers that require joining against your own course/enrollment data —
 1. **NestJS module-per-feature** mirrors the frontend's route grouping — `courses`, `enrollments`, `users`, `auth`, `admin`, `analytics` are independently testable and independently deployable later if you ever need to split into microservices (unlikely at this scale, but the boundary is free with Nest).
 2. **`modules-content` is deliberately separate from `courses`** — course metadata (catalog, filtering) and module content (video/text/quiz payloads) have very different read patterns and caching needs.
 3. **Progress tracking is denormalized** (`progressPct`, `completedModuleIds` on `Enrollment`) rather than computed on every read — recalculated via a BullMQ job whenever a module is marked complete, keeping the dashboard endpoint fast.
-4. **Course authoring is a self-built module (`admin`) in this same repo**, not a third-party CMS — no extra service to run or pay for, and course/module data lives directly in the same Postgres database and Prisma schema as everything else, with no sync job needed between systems.
+4. **Course authoring is a self-built module (`admin`) in this same repo**, not a third-party CMS — no extra service to run or pay for, and course/module data lives directly in the same MySQL database and Prisma schema as everything else, with no sync job needed between systems.
 5. **`chat` and `i18n` modules exist as stubs in the structure now** even though you're deferring them — Phase 3/4 becomes additive (new module folder + route registration) rather than a refactor of `courses`/`modules-content`.
 6. **S3-compatible storage from day one** (not local disk) — course videos/images go straight to object storage via presigned uploads, matching what the reference platform does with DigitalOcean Spaces.
-7. **Analytics is deliberately split into two owners** — PostHog for behavioral/engagement data (MAU, funnels, retention), your own Postgres for content/business metrics (completion rates, beneficiary counts) — avoids building a custom event pipeline while still getting the platform-specific numbers PostHog has no way to compute.
+7. **Analytics is deliberately split into two owners** — PostHog for behavioral/engagement data (MAU, funnels, retention), your own MySQL for content/business metrics (completion rates, beneficiary counts) — avoids building a custom event pipeline while still getting the platform-specific numbers PostHog has no way to compute.
 8. **Analytics reads hit denormalized snapshot tables, not live aggregate queries** — a nightly job does the expensive computation once; the `/admin/analytics/*` endpoints just read pre-computed rows, keeping the admin dashboard fast regardless of how large `Enrollment` grows.
