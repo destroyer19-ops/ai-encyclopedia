@@ -2,7 +2,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { BrainCircuit, Menu } from "lucide-react";
 
-export function Navbar() {
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+
+export async function Navbar() {
+  const session = await getServerSession(authOptions);
+  const user = session?.user as { name?: string | null, role?: string } | undefined;
+
   return (
     <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -33,12 +39,22 @@ export function Navbar() {
 
           {/* Actions */}
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">
-              Sign In
-            </Link>
-            <Button variant="gradient" className="rounded-full px-6" asChild>
-              <Link href="/register">Get Started</Link>
-            </Button>
+            {user ? (
+              <Button variant="gradient" className="rounded-full px-6" asChild>
+                <Link href={user.role === "admin" ? "/admin" : "/dashboard"}>
+                  {user.role === "admin" ? "Admin Panel" : "Dashboard"}
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">
+                  Sign In
+                </Link>
+                <Button variant="gradient" className="rounded-full px-6" asChild>
+                  <Link href="/register">Get Started</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Toggle */}
