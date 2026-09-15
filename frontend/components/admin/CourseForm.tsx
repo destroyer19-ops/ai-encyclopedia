@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { adminCoursesApi } from "@/lib/api-client";
+import { adminCoursesApi, uploadFileToStorage } from "@/lib/api-client";
 
 const courseSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -25,10 +25,14 @@ export function CourseForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingEcard, setUploadingEcard] = useState(false);
 
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema),
@@ -36,6 +40,28 @@ export function CourseForm() {
       persona: "youth",
     }
   });
+
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: "imageUrl" | "ecardUrl",
+    setUploading: (val: boolean) => void
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const session = await fetch("/api/auth/session").then((r) => r.json());
+      const token = session?.user?.accessToken;
+      
+      const url = await uploadFileToStorage(file, token);
+      setValue(field, url);
+    } catch (error) {
+      alert("Upload failed. Make sure your AWS .env variables are set!");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const onSubmit = async (data: CourseFormValues) => {
     setIsSubmitting(true);
@@ -107,20 +133,40 @@ export function CourseForm() {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Course Image URL</label>
-            <Input 
-              {...register("imageUrl")} 
-              placeholder="https://..." 
+          <div className="p-4 border border-slate-200 rounded-lg bg-slate-50">
+            <label className="block text-sm font-bold text-slate-700 mb-2">Course Image</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileUpload(e, "imageUrl", setUploadingImage)}
+              disabled={uploadingImage}
+              className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 disabled:opacity-50"
             />
+            {uploadingImage && (
+              <span className="text-xs text-blue-600 mt-2 block font-medium animate-pulse">⏳ Uploading to AWS...</span>
+            )}
+            <input type="hidden" {...register("imageUrl")} />
+            {watch("imageUrl") && (
+              <img src={watch("imageUrl")} alt="Course image preview" className="mt-3 h-24 w-full object-cover rounded-md shadow-sm border border-slate-200" />
+            )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">E-Card/Certificate URL</label>
-            <Input 
-              {...register("ecardUrl")} 
-              placeholder="https://..." 
+          <div className="p-4 border border-slate-200 rounded-lg bg-slate-50">
+            <label className="block text-sm font-bold text-slate-700 mb-2">E-Card / Certificate</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileUpload(e, "ecardUrl", setUploadingEcard)}
+              disabled={uploadingEcard}
+              className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-100 file:text-emerald-700 hover:file:bg-emerald-200 disabled:opacity-50"
             />
+            {uploadingEcard && (
+              <span className="text-xs text-emerald-600 mt-2 block font-medium animate-pulse">⏳ Uploading to AWS...</span>
+            )}
+            <input type="hidden" {...register("ecardUrl")} />
+            {watch("ecardUrl") && (
+              <img src={watch("ecardUrl")} alt="E-card preview" className="mt-3 h-24 w-full object-cover rounded-md shadow-sm border border-slate-200" />
+            )}
           </div>
         </div>
 

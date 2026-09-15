@@ -164,7 +164,7 @@ export const adminCoursesApi = {
 
 export const adminUploadsApi = {
   presign: (filename: string, contentType: string, token: string) =>
-    request<{ uploadUrl: string; objectUrl: string }>("/admin/uploads/presign", {
+    request<{ uploadUrl: string; finalUrl: string }>("/admin/uploads/presign", {
       method: "POST",
       body: { filename, contentType },
       token,
@@ -197,7 +197,7 @@ export const analyticsApi = {
  * directly to S3/Spaces — the video never passes through our Node server.
  */
 export async function uploadFileToStorage(file: File, token: string): Promise<string> {
-  const { uploadUrl, objectUrl } = await adminUploadsApi.presign(file.name, file.type, token);
+  const { uploadUrl, finalUrl } = await adminUploadsApi.presign(file.name, file.type, token);
 
   const uploadRes = await fetch(uploadUrl, {
     method: "PUT",
@@ -209,7 +209,7 @@ export async function uploadFileToStorage(file: File, token: string): Promise<st
     throw new Error("Failed to upload file to storage.");
   }
 
-  return objectUrl;
+  return finalUrl;
 }
 
 // ─── Shared API Types ─────────────────────────────────────────────────────────
