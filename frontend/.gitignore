@@ -9,7 +9,7 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-
+tsconfig.build.tsbuildinfo
 # testing
 /coverage
 
