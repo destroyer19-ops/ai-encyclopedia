@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String       @id @default(uuid())
+  email            String       @unique
+  passwordHash     String?
+  authProvider     String       // "google" | "local"
+  role             String       @default("learner") // "learner" | "admin"
+  gender           String?
+  birthYear        Int?
+  nationality      String?
+  employmentStatus String?
+  persona          String?      // Youth | Parents | Educators | MasterTrainers
+  enrollments      Enrollment[]
+  createdAt        DateTime     @default(now())
+}
+
+model Course {
+  id          String       @id @default(uuid())
+  slug        String
+  persona     String
+  title       String
+  category    String
+  description String       @db.Text
+  status      String       @default("draft") // "draft" | "published"
+  modules     Module[]
+  enrollments Enrollment[]
+
+  @@unique([persona, slug])
+}
+
+model Module {
+  id          String   @id @default(uuid())
+  courseId    String
+  title       String
+  order       Int
+  contentType String   // "video" | "text" | "quiz"
+  contentUrl  String?
+  contentBody String?  @db.Text
+  course      Course   @relation(fields: [courseId], references: [id])
+  completions ModuleCompletion[]
+}
+
+model Enrollment {
+  id          String    @id @default(uuid())
+  userId      String
+  courseId    String
+  progressPct Int       @default(0)
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  user        User      @relation(fields: [userId], references: [id])
+  course      Course    @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId])
+}
+
+// Replaces the Postgres-only String[] "completedModuleIds" field.
+// Join table: one row per module a user has finished. Also gives you
+// a clean source for module-level drop-off analytics later.
+model ModuleCompletion {
+  id          String   @id @default(uuid())
+  userId      String
+  moduleId    String
+  completedAt DateTime @default(now())
+  module      Module   @relation(fields: [moduleId], references: [id])
+
+  @@unique([userId, moduleId])
+}
