@@ -123,11 +123,18 @@ export function CourseForm() {
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
-            <Input 
-              {...register("category")} 
-              placeholder="e.g. Foundations" 
-              className={errors.category ? "border-red-500" : ""}
-            />
+            <select 
+              {...register("category")}
+              className={`flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.category ? "border-red-500" : ""}`}
+            >
+              <option value="">Select a category</option>
+              <option value="Foundations">Foundations</option>
+              <option value="Generative AI">Generative AI</option>
+              <option value="Ethics & Safety">Ethics & Safety</option>
+              <option value="Data Science">Data Science</option>
+              <option value="Classroom Tools">Classroom Tools</option>
+              <option value="Advanced AI">Advanced AI</option>
+            </select>
             {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category.message}</p>}
           </div>
         </div>

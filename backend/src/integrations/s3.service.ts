@@ -13,6 +13,8 @@ export class S3Service {
         accessKeyId: process.env.S3_ACCESS_KEY || 'fake-key',
         secretAccessKey: process.env.S3_SECRET_KEY || 'fake-secret',
       },
+      // Disable automatic CRC32 checksums — they break browser-side presigned PUT uploads
+      requestChecksumCalculation: 'WHEN_REQUIRED',
       // endpoint: 'https://sfo3.digitaloceanspaces.com', // Uncomment if using DigitalOcean
     });
   }
@@ -29,6 +31,8 @@ export class S3Service {
 
     const uploadUrl = await getSignedUrl(this.s3Client, command, {
       expiresIn: 900,
+      // Prevent checksum headers from being included in the signed URL
+      unhoistableHeaders: new Set(['x-amz-checksum-crc32', 'x-amz-sdk-checksum-algorithm']),
     });
     return {
       uploadUrl,

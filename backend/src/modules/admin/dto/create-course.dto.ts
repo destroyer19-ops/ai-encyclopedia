@@ -11,7 +11,7 @@ export class CreateCourseDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsEnum(['Youth', 'Parents', 'Educators', 'MasterTrainers'])
+  @IsEnum(['youth', 'parents', 'educators', 'trainers'])
   persona: string;
 
   @IsString()
