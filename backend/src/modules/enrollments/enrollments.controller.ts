@@ -33,12 +33,23 @@ export class EnrollmentsController {
     return this.enrollmentsService.getMyEnrollments(req.user.userId);
   }
 
-  @Post(':courseId')
+  @Get(':courseSlug')
+  async getEnrollmentForCourse(
+    @Request() req: { user: any },
+    @Param('courseSlug') courseSlug: string,
+  ) {
+    return this.enrollmentsService.getEnrollmentBySlug(
+      req.user.userId,
+      courseSlug,
+    );
+  }
+
+  @Post(':courseSlug')
   async enroll(
     @Request() req: { user: any },
-    @Param('courseId') courseId: string,
+    @Param('courseSlug') courseSlug: string,
   ) {
-    return this.enrollmentsService.enroll(req.user.userId, courseId);
+    return this.enrollmentsService.enrollBySlug(req.user.userId, courseSlug);
   }
 
   @Patch(':courseId/progress')

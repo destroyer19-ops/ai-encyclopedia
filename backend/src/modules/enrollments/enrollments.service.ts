@@ -2,33 +2,131 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { UpdateProgressDto } from './dto/update-progress.dto.js';
 
 @Injectable()
 export class EnrollmentsService {
+  private readonly logger = new Logger(EnrollmentsService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async getMyEnrollments(userId: string) {
-    return this.prisma.enrollment.findMany({
-      where: { userId },
-      include: {
-        course: { select: { title: true, slug: true, persona: true } },
-      },
-    });
+    try {
+      return await this.prisma.enrollment.findMany({
+        where: { userId },
+        include: {
+          course: { select: { id: true, title: true, slug: true, persona: true } },
+        },
+      });
+    } catch (error) {
+      this.logUnexpectedError(
+        `Failed to load enrollments for user ${userId}`,
+        error,
+      );
+      throw new InternalServerErrorException(
+        'Unable to load enrollments. Please try again.',
+      );
+    }
   }
 
-  async enroll(userId: string, courseId: string) {
-    const existing = await this.prisma.enrollment.findUnique({
-      where: { userId_courseId: { userId, courseId } },
-    });
-    if (existing) {
+  async getEnrollmentBySlug(userId: string, courseSlug: string) {
+    let course: {
+      id: string;
+      title: string;
+      slug: string;
+      persona: string;
+    } | null;
+
+    try {
+      course = await this.prisma.course.findFirst({
+        where: { slug: courseSlug, status: 'published' },
+        select: { id: true, title: true, slug: true, persona: true },
+      });
+    } catch (error) {
+      this.logUnexpectedError(
+        `Failed to find course for slug ${courseSlug}`,
+        error,
+      );
+      throw new InternalServerErrorException(
+        'Unable to load enrollment status. Please try again.',
+      );
+    }
+
+    if (!course) {
+      throw new NotFoundException('Course not found.');
+    }
+
+    let enrollment;
+    try {
+      enrollment = await this.prisma.enrollment.findUnique({
+        where: { userId_courseId: { userId, courseId: course.id } },
+        include: {
+          course: { select: { id: true, title: true, slug: true, persona: true } },
+        },
+      });
+    } catch (error) {
+      this.logUnexpectedError(
+        `Failed to load enrollment for user ${userId} and course ${course.id}`,
+        error,
+      );
+      throw new InternalServerErrorException(
+        'Unable to load enrollment status. Please try again.',
+      );
+    }
+
+    return {
+      enrolled: Boolean(enrollment),
+      enrollment,
+      course,
+    };
+  }
+
+  async enrollBySlug(userId: string, courseSlug: string) {
+    const { enrolled, course } = await this.getEnrollmentBySlug(
+      userId,
+      courseSlug,
+    );
+
+    if (enrolled) {
       throw new ConflictException('You are already enrolled in this course.');
     }
-    return this.prisma.enrollment.create({
-      data: { userId, courseId },
-    });
+
+    try {
+      return await this.prisma.enrollment.create({
+        data: { userId, courseId: course.id },
+        include: {
+          course: { select: { id: true, title: true, slug: true, persona: true } },
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('You are already enrolled in this course.');
+      }
+
+      this.logUnexpectedError(
+        `Failed to create enrollment for user ${userId} and course ${course.id}`,
+        error,
+      );
+
+      throw new InternalServerErrorException(
+        'Unable to complete enrollment. Please try again.',
+      );
+    }
+  }
+
+  private logUnexpectedError(message: string, error: unknown) {
+    this.logger.error(
+      message,
+      error instanceof Error ? error.stack : String(error),
+    );
   }
 
   async completeModule(
