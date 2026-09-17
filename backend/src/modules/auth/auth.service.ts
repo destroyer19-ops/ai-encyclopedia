@@ -31,7 +31,7 @@ export class AuthService {
     };
 
     return {
-      accessToken: this.jwtService.sign(payload),
+      access_token: this.jwtService.sign(payload),
       user: { id: user.id, email: user.email, role: user.role },
     };
   }
@@ -56,7 +56,8 @@ export class AuthService {
         persona: data.persona || 'Youth',
       },
     });
-    const { passwordHash, ...result } = registerUser;
-    return result;
+    
+    // Automatically log the user in after registration
+    return this.login(registerUser);
   }
 }
