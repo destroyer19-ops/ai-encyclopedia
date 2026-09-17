@@ -1,0 +1,45 @@
+--- a/ai-encyclopedia-hub/src/routes/learner.register.tsx
++++ b/ai-encyclopedia-hub/src/routes/learner.register.tsx
+@@ -1,10 +1,10 @@
+ import { useState } from "react";
+-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
++import { createFileRoute, Link } from "@tanstack/react-router";
+ import { toast } from "sonner";
+-import { register } from "@/lib/api-client";
++import { register, login } from "@/lib/api-client";
+ import { Button } from "@/components/ui/button";
+ import { Input } from "@/components/ui/input";
+@@ -36,7 +36,6 @@
+ 
+ function LearnerRegisterPage() {
+-  const navigate = useNavigate();
+   const [email, setEmail] = useState("");
+   const [password, setPassword] = useState("");
+   const [confirm, setConfirm] = useState("");
+@@ -52,10 +51,26 @@
+     try {
+       await register(email, password, persona || undefined);
+       toast.success("Account created! Welcome to AI Encyclovia.");
+-      navigate({ to: "/courses" });
++      const params = new URLSearchParams(window.location.search);
++      const returnTo = params.get("returnTo");
++      window.location.href = returnTo || "/courses";
+     } catch (err) {
+-      toast.error(err instanceof Error ? err.message : "Something went wrong. Please try again.");
++      const msg = err instanceof Error ? err.message : "Something went wrong. Please try again.";
++      if (msg.toLowerCase().includes("email already in use")) {
++        try {
++          await login(email, password);
++          toast.success("Account already exists. Logged in successfully!");
++          const params = new URLSearchParams(window.location.search);
++          const returnTo = params.get("returnTo");
++          window.location.href = returnTo || "/courses";
++        } catch (loginErr) {
++          toast.error("Account already exists, but password was incorrect. Please log in.");
++        }
++      } else {
++        toast.error(msg);
++      }
+     } finally {
+       setBusy(false);
+     }

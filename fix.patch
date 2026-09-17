@@ -1,0 +1,31 @@
+--- a/ai-encyclopedia-hub/src/routes/courses.$slug.tsx
++++ b/ai-encyclopedia-hub/src/routes/courses.$slug.tsx
+@@ -93,6 +93,22 @@
+   useEffect(() => {
+     if (!isAuthenticated() || !hasCourse) {
+       setEnrollment(null);
++      
++      // Check autoEnroll
++      const params = new URLSearchParams(window.location.search);
++      if (params.get("autoEnroll") === "true" && hasCourse) {
++         // They just logged in or registered, remove autoEnroll and trigger enroll
++         window.history.replaceState({}, "", window.location.pathname);
++         // wait for auth token to be available
++         if (isAuthenticated()) {
++            setTimeout(() => {
++               handleEnroll();
++            }, 100);
++         }
++      }
+       return;
+     }
+ 
+@@ -122,7 +138,7 @@
+ 
+     if (!isAuthenticated()) {
+       toast.info("Please log in to enrol.");
+-      window.location.href = `/learner/register`;
++      window.location.href = `/learner/register?returnTo=${encodeURIComponent(`/courses/${slug}?autoEnroll=true`)}`;
+       return;
+     }
+ 
