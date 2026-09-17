@@ -8,9 +8,12 @@ import { S3Service } from '../../integrations/s3.service.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { PassportModule } from '@nestjs/passport';
 
+import { AdminEnrollmentsController } from './admin-enrollments.controller.js';
+import { AdminEnrollmentsService } from './admin-enrollments.service.js';
+
 @Module({
   imports: [PrismaModule, AuthModule, PassportModule],
-  controllers: [AdminCourseController, AdminUploadsController],
-  providers: [adminCourseServices, AdminUploadsService, S3Service],
+  controllers: [AdminCourseController, AdminUploadsController, AdminEnrollmentsController],
+  providers: [adminCourseServices, AdminUploadsService, S3Service, AdminEnrollmentsService],
 })
 export class AdminModule {}

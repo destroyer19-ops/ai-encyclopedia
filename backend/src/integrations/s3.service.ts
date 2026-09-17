@@ -18,10 +18,10 @@ export class S3Service {
       // endpoint: 'https://sfo3.digitaloceanspaces.com', // Uncomment if using DigitalOcean
     });
   }
-  async generatePresignedUrl(contentType: string, orginalFileName: string) {
+  async generatePresignedUrl(contentType: string, orginalFileName: string, folder: string = 'courses') {
     const extension = orginalFileName.split('.').pop();
     const uniqeFileName = `${uuidv4()}.${extension}`;
-    const key = `uploads/courses/${uniqeFileName}`;
+    const key = `uploads/${folder}/${uniqeFileName}`;
 
     const command = new PutObjectCommand({
       Bucket: this.bucketName,

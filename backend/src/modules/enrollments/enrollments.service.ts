@@ -69,4 +69,19 @@ export class EnrollmentsService {
       },
     });
   }
+
+  async submitPaymentProof(userId: string, courseId: string, paymentProofUrl: string) {
+    const enrollment = await this.prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId, courseId } },
+    });
+    if (!enrollment) throw new NotFoundException('Enrollment not found');
+
+    return this.prisma.enrollment.update({
+      where: { id: enrollment.id },
+      data: {
+        paymentStatus: 'under_review',
+        paymentProofUrl,
+      },
+    });
+  }
 }

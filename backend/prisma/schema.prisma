@@ -51,14 +51,16 @@ model Module {
 }
 
 model Enrollment {
-  id          String    @id @default(uuid())
-  userId      String
-  courseId    String
-  progressPct Int       @default(0)
-  startedAt   DateTime  @default(now())
-  completedAt DateTime?
-  user        User      @relation(fields: [userId], references: [id])
-  course      Course    @relation(fields: [courseId], references: [id])
+  id              String    @id @default(uuid())
+  userId          String
+  courseId        String
+  progressPct     Int       @default(0)
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  paymentStatus   String    @default("unpaid") // "unpaid" | "under_review" | "approved" | "rejected"
+  paymentProofUrl String?
+  user            User      @relation(fields: [userId], references: [id])
+  course          Course    @relation(fields: [courseId], references: [id])
 
   @@unique([userId, courseId])
 }
