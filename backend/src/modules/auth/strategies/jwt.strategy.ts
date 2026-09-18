@@ -18,6 +18,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
   async validate(payload: any) {
-    return { userId: payload.sub, email: payload.email, role: payload.role };
+    // Some JWTs use `id`, others use `sub`
+    const userId = payload.sub || payload.id;
+    if (!userId) {
+      throw new Error('JWT payload missing user ID (sub or id)');
+    }
+    return { userId, email: payload.email, role: payload.role };
   }
 }

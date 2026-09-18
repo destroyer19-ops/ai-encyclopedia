@@ -1,4 +1,8 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { EnrollmentsService } from './enrollments.service.js';
 
 const course = {
@@ -47,6 +51,20 @@ describe('EnrollmentsService', () => {
         course: { select: { id: true, title: true, slug: true, persona: true } },
       },
     });
+  });
+
+  it('throws an internal server error when enrollment retrieval fails', async () => {
+    const { service } = createService({
+      enrollment: {
+        findMany: vi.fn().mockRejectedValue(new Error('missing column')),
+        findUnique: vi.fn().mockResolvedValue(null),
+        create: vi.fn(),
+      },
+    });
+
+    await expect(service.getMyEnrollments('user-1')).rejects.toBeInstanceOf(
+      InternalServerErrorException,
+    );
   });
 
   it('reports not enrolled for a valid course with no enrollment', async () => {

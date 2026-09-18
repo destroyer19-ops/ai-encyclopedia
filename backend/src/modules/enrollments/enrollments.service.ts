@@ -16,6 +16,8 @@ export class EnrollmentsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getMyEnrollments(userId: string) {
+    if (!userId) return [];
+
     try {
       return await this.prisma.enrollment.findMany({
         where: { userId },
@@ -25,7 +27,7 @@ export class EnrollmentsService {
       });
     } catch (error) {
       this.logUnexpectedError(
-        `Failed to load enrollments for user ${userId}`,
+        `Failed to load enrollments for user ${userId}. Error: ${error}`,
         error,
       );
       throw new InternalServerErrorException(
@@ -58,6 +60,7 @@ export class EnrollmentsService {
     }
 
     if (!course) {
+      this.logger.warn(`getEnrollmentBySlug: Course not found in DB for slug '${courseSlug}'. Make sure the seed script was run on the production database.`);
       throw new NotFoundException('Course not found.');
     }
 
