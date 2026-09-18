@@ -52,6 +52,19 @@ export class S3Service {
     return {
       uploadUrl,
       finalUrl: `${this.publicBaseUrl.replace(/\/$/, '')}/${key}`,
+      key, // Return the key as well, in case callers want to store just the key
     };
+  }
+
+  async generatePresignedGetUrl(key: string, expiresInSeconds = 3600) {
+    const { GetObjectCommand } = await import('@aws-sdk/client-s3');
+    const command = new GetObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+    });
+    const url = await getSignedUrl(this.s3Client, command, {
+      expiresIn: expiresInSeconds,
+    });
+    return url;
   }
 }

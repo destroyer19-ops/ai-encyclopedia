@@ -3,9 +3,11 @@ import { ModuleController } from './modules.controller.js';
 import { ModuleServices } from './modules.service.js';
 import { PrismaModule } from '../../prisma/prisma.module.js';
 
+import { S3Service } from '../../integrations/s3.service.js';
+
 @Module({
   imports: [PrismaModule],
   controllers: [ModuleController],
-  providers: [ModuleServices],
+  providers: [ModuleServices, S3Service],
 })
 export class ModulesModule {}
