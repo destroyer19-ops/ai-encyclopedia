@@ -10,6 +10,15 @@ export class ModuleServices {
   ) {}
 
   async findAllForCourse(courseId: string) {
+    const course = await this.prisma.course.findUnique({
+      where: { id: courseId },
+      select: { id: true },
+    });
+
+    if (!course) {
+      throw new NotFoundException('Course not found.');
+    }
+
     return this.prisma.module.findMany({
       where: { courseId },
       orderBy: { order: 'asc' },

@@ -15,8 +15,8 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
   imports: [
     AuthModule,
     PrismaModule,
-    CoursesModule,
     ModulesModule,
+    CoursesModule,
     AdminModule,
     UsersModule,
     EnrollmentsModule,
