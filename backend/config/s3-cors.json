@@ -1,0 +1,17 @@
+{
+  "CORSRules": [
+    {
+      "AllowedHeaders": ["*"],
+      "AllowedMethods": ["PUT", "GET", "HEAD"],
+      "AllowedOrigins": [
+        "https://ai-encyclovia-frontend.vercel.app",
+        "https://aiencyclovia.org",
+        "https://www.aiencyclovia.org",
+        "http://localhost:3000",
+        "http://localhost:5173"
+      ],
+      "ExposeHeaders": ["ETag"],
+      "MaxAgeSeconds": 3000
+    }
+  ]
+}
