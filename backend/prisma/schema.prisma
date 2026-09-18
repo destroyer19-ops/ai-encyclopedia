@@ -25,13 +25,19 @@ model User {
 model Course {
   id          String       @id @default(uuid())
   slug        String
-  persona     String
+  persona     String       @default("youth")
   title       String
-  category    String
+  category    String       @default("01")
   description String       @db.Text
+  overview    String?      @db.Text
+  tone        String       @default("bg-sky")
   imageUrl    String?
   ecardUrl    String?
   status      String       @default("draft") // "draft" | "published"
+  isPublished Boolean      @default(true)
+  sortOrder   Int          @default(0)
+  outcomes    Json?
+  sessions    Json?
   modules     Module[]
   enrollments Enrollment[]
 

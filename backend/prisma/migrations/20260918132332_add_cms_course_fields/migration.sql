@@ -1,0 +1,9 @@
+-- AlterTable
+ALTER TABLE `Course` ADD COLUMN `isPublished` BOOLEAN NOT NULL DEFAULT true,
+    ADD COLUMN `outcomes` JSON NULL,
+    ADD COLUMN `overview` TEXT NULL,
+    ADD COLUMN `sessions` JSON NULL,
+    ADD COLUMN `sortOrder` INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN `tone` VARCHAR(191) NOT NULL DEFAULT 'bg-sky',
+    MODIFY `persona` VARCHAR(191) NOT NULL DEFAULT 'youth',
+    MODIFY `category` VARCHAR(191) NOT NULL DEFAULT '01';

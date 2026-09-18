@@ -4,9 +4,11 @@ import {
   Post,
   Param,
   Patch,
+  Put,
+  Delete,
+  Get,
   UseGuards,
 } from '@nestjs/common';
-import { CreateCourseDto } from './dto/create-course.dto.js';
 import { adminCourseServices } from './admin-courses.service.js';
 import { CreateModuleDto } from './dto/create-module.dto.js';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard.js';
@@ -18,10 +20,27 @@ import { Roles } from '../../common/decorators/roles.decorator.js';
 @Roles('admin')
 export class AdminCourseController {
   constructor(private readonly adminCourseServices: adminCourseServices) {}
+
+  @Get()
+  async getCourses() {
+    return this.adminCourseServices.getCourses();
+  }
+
   @Post()
-  async createCourse(@Body() body: CreateCourseDto) {
+  async createCourse(@Body() body: any) {
     return this.adminCourseServices.createCourse(body);
   }
+
+  @Put(':id')
+  async updateCourse(@Param('id') id: string, @Body() body: any) {
+    return this.adminCourseServices.updateCourse(id, body);
+  }
+
+  @Delete(':id')
+  async deleteCourse(@Param('id') id: string) {
+    return this.adminCourseServices.deleteCourse(id);
+  }
+
   @Post(':id/modules')
   async createModule(
     @Param('id') courseId: string,
@@ -29,6 +48,7 @@ export class AdminCourseController {
   ) {
     return this.adminCourseServices.createModule(courseId, body);
   }
+
   @Patch(':id/publish')
   async publishCourse(@Param('id') courseId: string) {
     return this.adminCourseServices.publishCourse(courseId);
