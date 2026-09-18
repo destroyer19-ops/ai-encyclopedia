@@ -1,11 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateCourseDto } from './dto/create-course.dto.js';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { S3Service } from '../../integrations/s3.service.js';
 import { CreateModuleDto } from './dto/create-module.dto.js';
 
 @Injectable()
 export class adminCourseServices {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   async createCourse(dto: any) {
     return this.prisma.course.create({ data: dto });
@@ -41,5 +44,9 @@ export class adminCourseServices {
       where: { id: courseId },
       data: { status: 'published', isPublished: true },
     });
+  }
+
+  async presignMedia(contentType: string, filename: string) {
+    return this.s3Service.generatePresignedUrl(contentType, filename, 'media');
   }
 }

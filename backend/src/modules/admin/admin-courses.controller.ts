@@ -53,4 +53,11 @@ export class AdminCourseController {
   async publishCourse(@Param('id') courseId: string) {
     return this.adminCourseServices.publishCourse(courseId);
   }
+
+  @Post('media/presign')
+  async presignMedia(
+    @Body() body: { contentType: string; filename: string }
+  ) {
+    return this.adminCourseServices.presignMedia(body.contentType, body.filename);
+  }
 }
