@@ -52,6 +52,7 @@ model Module {
   contentType String   // "video" | "text" | "quiz"
   contentUrl  String?  // S3 object key (not a full URL) for secure video delivery
   contentBody String?  @db.Text
+  contentMeta Json?
   duration    Int?     // length in seconds — used to show "5 min video" in the UI
   isPublished Boolean  @default(true) // admin can draft a module before making it visible
   course      Course   @relation(fields: [courseId], references: [id])

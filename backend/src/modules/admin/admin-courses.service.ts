@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { S3Service } from '../../integrations/s3.service.js';
 import { CreateModuleDto } from './dto/create-module.dto.js';
@@ -35,7 +36,14 @@ export class adminCourseServices {
 
   async createModule(courseId: string, dto: CreateModuleDto) {
     return this.prisma.module.create({
-      data: { ...dto, courseId },
+      data: {
+        ...dto,
+        contentMeta:
+          dto.contentMeta === undefined
+            ? undefined
+            : (dto.contentMeta as Prisma.InputJsonValue),
+        courseId,
+      },
     });
   }
 

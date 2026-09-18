@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsInt,
   IsOptional,
+  IsObject,
 } from 'class-validator';
 export class CreateModuleDto {
   @IsString()
@@ -16,7 +17,7 @@ export class CreateModuleDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsEnum(['video', 'text', 'quiz'])
+  @IsEnum(['video', 'pdf', 'document', 'presentation', 'text', 'quiz'])
   contentType: string;
 
   @IsString()
@@ -26,4 +27,8 @@ export class CreateModuleDto {
   @IsString()
   @IsOptional()
   contentBody?: string;
+
+  @IsObject()
+  @IsOptional()
+  contentMeta?: Record<string, unknown>;
 }

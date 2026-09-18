@@ -15,6 +15,13 @@ export class ModuleController {
     return this.moduleServices.findAllForCourse(courseId);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @Get('admin')
+  async findAllAdmin(@Param('courseId') courseId: string) {
+    return this.moduleServices.findAllForCourseAdmin(courseId);
+  }
+
   // Learner fetches a module (requires authentication)
   @UseGuards(JwtAuthGuard)
   @Get(':moduleId')
@@ -23,17 +30,34 @@ export class ModuleController {
     @Param('moduleId') moduleId: string,
     @Request() req: any,
   ) {
-    return this.moduleServices.findOne(courseId, moduleId, req.user?.id);
+    return this.moduleServices.findOne(courseId, moduleId, req.user?.userId ?? req.user?.id);
   }
 
   // Learner marks a module as complete
   @UseGuards(JwtAuthGuard)
   @Post(':moduleId/complete')
   async markComplete(
+    @Param('courseId') courseId: string,
     @Param('moduleId') moduleId: string,
     @Request() req: any,
   ) {
-    return this.moduleServices.markComplete(req.user.id, moduleId);
+    return this.moduleServices.markComplete(req.user.userId ?? req.user.id, courseId, moduleId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':moduleId/quiz-submit')
+  async submitQuiz(
+    @Param('courseId') courseId: string,
+    @Param('moduleId') moduleId: string,
+    @Request() req: any,
+    @Body() body: { answers: Record<string, string | string[]> },
+  ) {
+    return this.moduleServices.submitQuiz(
+      courseId,
+      moduleId,
+      req.user.userId ?? req.user.id,
+      body.answers ?? {},
+    );
   }
 
   // ---- ADMIN ENDPOINTS ----
@@ -50,7 +74,7 @@ export class ModuleController {
   @Post()
   async create(
     @Param('courseId') courseId: string,
-    @Body() body: { title: string; order: number; contentType: string; contentUrl?: string; contentBody?: string },
+    @Body() body: { title: string; order: number; contentType: string; contentUrl?: string; contentBody?: string; contentMeta?: unknown; duration?: number | null; isPublished?: boolean },
   ) {
     return this.moduleServices.create(courseId, body);
   }
@@ -61,7 +85,7 @@ export class ModuleController {
   async update(
     @Param('courseId') courseId: string,
     @Param('moduleId') moduleId: string,
-    @Body() body: Partial<{ title: string; order: number; contentType: string; contentUrl: string; contentBody: string }>,
+    @Body() body: Partial<{ title: string; order: number; contentType: string; contentUrl: string; contentBody: string; contentMeta: unknown; duration: number | null; isPublished: boolean }>,
   ) {
     return this.moduleServices.update(courseId, moduleId, body);
   }
