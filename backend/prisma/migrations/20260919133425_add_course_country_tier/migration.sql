@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `Course` ADD COLUMN `country` VARCHAR(191) NOT NULL DEFAULT 'Global',
+    ADD COLUMN `tier` VARCHAR(191) NULL;

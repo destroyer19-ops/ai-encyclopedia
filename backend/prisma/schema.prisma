@@ -36,6 +36,8 @@ model Course {
   status      String       @default("draft") // "draft" | "published"
   isPublished Boolean      @default(true)
   sortOrder   Int          @default(0)
+  country     String       @default("Global") // e.g. "Nigeria", "Ghana", "Global"
+  tier        String?                          // "Basic" | "Intermediate" | "Advanced"
   outcomes    Json?
   sessions    Json?
   modules     Module[]

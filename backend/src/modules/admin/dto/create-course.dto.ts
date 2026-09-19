@@ -29,4 +29,13 @@ export class CreateCourseDto {
   @IsOptional()
   @IsString()
   ecardUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsEnum(['Basic', 'Intermediate', 'Advanced'])
+  tier?: string;
 }
