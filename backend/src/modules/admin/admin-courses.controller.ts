@@ -60,4 +60,27 @@ export class AdminCourseController {
   ) {
     return this.adminCourseServices.presignMedia(body.contentType, body.filename);
   }
+
+  @Post('modules/:moduleId/assignment')
+  async upsertAssignment(
+    @Param('moduleId') moduleId: string,
+    @Body() body: any,
+  ) {
+    return this.adminCourseServices.upsertAssignment(moduleId, body);
+  }
+
+  @Get('modules/:moduleId/assignment')
+  async getAssignment(@Param('moduleId') moduleId: string) {
+    return this.adminCourseServices.getAssignment(moduleId);
+  }
+
+  @Get(':id/stats')
+  async getCourseStatistics(@Param('id') courseId: string) {
+    return this.adminCourseServices.getCourseStatistics(courseId);
+  }
+
+  @Get(':id/students')
+  async getCourseStudents(@Param('id') courseId: string) {
+    return this.adminCourseServices.getCourseStudents(courseId);
+  }
 }

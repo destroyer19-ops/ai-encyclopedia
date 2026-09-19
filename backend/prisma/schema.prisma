@@ -19,6 +19,7 @@ model User {
   employmentStatus String?
   persona          String?      // Youth | Parents | Educators | MasterTrainers
   enrollments      Enrollment[]
+  submissions      AssignmentSubmission[]
   createdAt        DateTime     @default(now())
 }
 
@@ -38,6 +39,7 @@ model Course {
   sortOrder   Int          @default(0)
   country     String       @default("Global") // e.g. "Nigeria", "Ghana", "Global"
   tier        String?                          // "Basic" | "Intermediate" | "Advanced"
+  price       Int?                             // Add price field
   outcomes    Json?
   sessions    Json?
   modules     Module[]
@@ -78,6 +80,40 @@ model Module {
   isPublished Boolean  @default(true) // admin can draft a module before making it visible
   course      Course   @relation(fields: [courseId], references: [id])
   completions ModuleCompletion[]
+  assignment  Assignment?
+}
+
+model Assignment {
+  id              String   @id @default(uuid())
+  moduleId        String   @unique
+  title           String
+  description     String   @db.Text
+  attachmentUrl   String?
+  submissionType  String   @default("text") // "text" | "file" | "both"
+  dueDate         DateTime?
+  maxScore        Int?
+  passMark        Int?
+  isRequired      Boolean  @default(false)
+  isEnabled       Boolean  @default(true)
+  module          Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  submissions     AssignmentSubmission[]
+}
+
+model AssignmentSubmission {
+  id           String   @id @default(uuid())
+  assignmentId String
+  userId       String
+  content      String?  @db.Text
+  fileUrl      String?
+  status       String   @default("submitted") // "submitted" | "graded" | "returned"
+  score        Int?
+  feedback     String?  @db.Text
+  submittedAt  DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, userId])
 }
 
 model Enrollment {

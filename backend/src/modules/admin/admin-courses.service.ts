@@ -71,4 +71,78 @@ export class adminCourseServices {
   async presignMedia(contentType: string, filename: string) {
     return this.s3Service.generatePresignedUrl(contentType, filename, 'media');
   }
+
+  async upsertAssignment(moduleId: string, dto: any) {
+    return this.prisma.assignment.upsert({
+      where: { moduleId },
+      update: {
+        title: dto.title,
+        description: dto.description,
+        attachmentUrl: dto.attachmentUrl,
+        submissionType: dto.submissionType,
+        dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
+        maxScore: dto.maxScore,
+        passMark: dto.passMark,
+        isRequired: dto.isRequired,
+        isEnabled: dto.isEnabled,
+      },
+      create: {
+        moduleId,
+        title: dto.title,
+        description: dto.description,
+        attachmentUrl: dto.attachmentUrl,
+        submissionType: dto.submissionType || 'text',
+        dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
+        maxScore: dto.maxScore,
+        passMark: dto.passMark,
+        isRequired: dto.isRequired || false,
+        isEnabled: dto.isEnabled ?? true,
+      }
+    });
+  }
+
+  async getAssignment(moduleId: string) {
+    return this.prisma.assignment.findUnique({
+      where: { moduleId }
+    });
+  }
+
+  async getCourseStatistics(courseId: string) {
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: { courseId },
+    });
+
+    const totalLearners = enrollments.length;
+    const paidLearners = enrollments.filter(e => e.paymentStatus === 'approved').length;
+    const startedLearners = enrollments.filter(e => e.progressPct > 0).length;
+    const completedLearners = enrollments.filter(e => e.progressPct === 100).length;
+    
+    const course = await this.prisma.course.findUnique({ where: { id: courseId }});
+    const price = course?.price || 0;
+    const revenue = paidLearners * price;
+
+    return {
+      totalLearners,
+      paidLearners,
+      startedLearners,
+      completedLearners,
+      completionRate: totalLearners > 0 ? (completedLearners / totalLearners) * 100 : 0,
+      revenue
+    };
+  }
+
+  async getCourseStudents(courseId: string) {
+    return this.prisma.enrollment.findMany({
+      where: { courseId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            createdAt: true
+          }
+        }
+      }
+    });
+  }
 }

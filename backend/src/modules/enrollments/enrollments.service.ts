@@ -22,7 +22,7 @@ export class EnrollmentsService {
       return await this.prisma.enrollment.findMany({
         where: { userId },
         include: {
-          course: { select: { id: true, title: true, slug: true, persona: true } },
+          course: { select: { id: true, title: true, slug: true, persona: true, price: true } },
         },
       });
     } catch (error) {
@@ -69,7 +69,7 @@ export class EnrollmentsService {
       enrollment = await this.prisma.enrollment.findUnique({
         where: { userId_courseId: { userId, courseId: course.id } },
         include: {
-          course: { select: { id: true, title: true, slug: true, persona: true } },
+          course: { select: { id: true, title: true, slug: true, persona: true, price: true } },
         },
       });
     } catch (error) {
@@ -103,7 +103,7 @@ export class EnrollmentsService {
       return await this.prisma.enrollment.create({
         data: { userId, courseId: course.id },
         include: {
-          course: { select: { id: true, title: true, slug: true, persona: true } },
+          course: { select: { id: true, title: true, slug: true, persona: true, price: true } },
         },
       });
     } catch (error) {
