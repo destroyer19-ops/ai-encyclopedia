@@ -11,14 +11,28 @@ export class adminCourseServices {
     private readonly s3Service: S3Service,
   ) {}
 
+  private normalizePublishFields(dto: any) {
+    const next = { ...dto };
+
+    if (typeof next.isPublished === 'boolean' && next.status === undefined) {
+      next.status = next.isPublished ? 'published' : 'draft';
+    }
+
+    if (typeof next.status === 'string' && next.isPublished === undefined) {
+      next.isPublished = next.status === 'published';
+    }
+
+    return next;
+  }
+
   async createCourse(dto: any) {
-    return this.prisma.course.create({ data: dto });
+    return this.prisma.course.create({ data: this.normalizePublishFields(dto) });
   }
 
   async updateCourse(id: string, dto: any) {
     return this.prisma.course.update({
       where: { id },
-      data: dto,
+      data: this.normalizePublishFields(dto),
     });
   }
 

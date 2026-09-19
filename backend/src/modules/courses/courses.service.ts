@@ -19,6 +19,7 @@ export class CoursesService {
       },
       include: {
         modules: {
+          where: { isPublished: true },
           orderBy: { order: 'asc' },
           select: { id: true, title: true, contentType: true },
         },
@@ -49,6 +50,7 @@ export class CoursesService {
       },
       include: {
         modules: {
+          where: { isPublished: true },
           orderBy: { order: 'asc' },
         },
       },
