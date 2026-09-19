@@ -10,6 +10,7 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { EnrollmentsModule } from './modules/enrollments/enrollments.module.js';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
+import { TrainingsModule } from './modules/trainings/trainings.module.js';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
     AdminModule,
     UsersModule,
     EnrollmentsModule,
+    TrainingsModule,
   ],
   controllers: [AppController],
   providers: [
