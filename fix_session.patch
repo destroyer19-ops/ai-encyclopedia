@@ -1,0 +1,92 @@
+--- ai-encyclopedia-hub/src/lib/session.ts
++++ ai-encyclopedia-hub/src/lib/session.ts
+@@ -4,6 +4,6 @@
+ import { useCallback } from "react";
+-import type { User } from "@supabase/supabase-js";
+-import { supabase } from "@/integrations/supabase/client";
++import { apiFetch, removeAuthToken } from "@/lib/api";
+ 
+ export type Profile = {
+   id: string;
+@@ -19,13 +19,25 @@
+ export type AppRole = "student" | "educator" | "admin" | "editor" | "user";
+ 
++export type BackendUser = {
++  id: string;
++  email: string;
++  role: "learner" | "admin";
++  first_name?: string;
++  last_name?: string;
++  country?: string;
++  phone?: string;
++  avatar_url?: string;
++  theme?: string;
++  locale?: string;
++}
++
+ /** The signed-in auth user, or null. */
+ export function useSessionUser() {
+   return useQuery({
+     queryKey: ["session-user"],
+     staleTime: 30_000,
+-    queryFn: async (): Promise<User | null> => {
+-      const { data } = await supabase.auth.getUser();
+-      return data.user ?? null;
++    queryFn: async (): Promise<BackendUser | null> => {
++      return await apiFetch("/users/me").catch(() => null);
+     },
+   });
+ }
+@@ -37,11 +49,7 @@
+     staleTime: 30_000,
+     queryFn: async (): Promise<Profile | null> => {
+-      const { data, error } = await supabase
+-        .from("profiles")
+-        .select("id, first_name, last_name, email, country, phone, avatar_url, theme, locale")
+-        .eq("id", user!.id)
+-        .maybeSingle();
+-      if (error) throw error;
+-      return (data as Profile | null) ?? null;
++      if (!user) return null;
++      // Fallback for profile using the backend user object
++      return user as unknown as Profile;
+     },
+   });
+@@ -55,11 +63,7 @@
+     staleTime: 30_000,
+     queryFn: async (): Promise<AppRole[]> => {
+-      const { data, error } = await supabase
+-        .from("user_roles")
+-        .select("role")
+-        .eq("user_id", user!.id);
+-      if (error) throw error;
+-      return (data ?? []).map((r) => r.role as AppRole);
++      if (!user) return [];
++      return [user.role === "learner" ? "student" : (user.role as AppRole)];
+     },
+   });
+@@ -74,13 +78,11 @@
+ }
+ 
+-export function displayName(profile: Profile | null | undefined, user: User | null): string {
++export function displayName(profile: Profile | null | undefined, user: BackendUser | null): string {
+   const first = profile?.first_name?.trim();
+   if (first) return first;
+-  const metaFirst = (user?.user_metadata?.["first_name"] as string | undefined)?.trim();
++  const metaFirst = user?.first_name?.trim();
+   if (metaFirst) return metaFirst;
+-  const fullName = (user?.user_metadata?.["full_name"] as string | undefined)?.trim();
+-  if (fullName) return fullName.split(" ")[0]!;
+   return user?.email?.split("@")[0] ?? "";
+ }
+ 
+-export function initials(profile: Profile | null | undefined, user: User | null): string {
++export function initials(profile: Profile | null | undefined, user: BackendUser | null): string {
+   const a = profile?.first_name?.[0] ?? user?.email?.[0] ?? "A";
+@@ -95,5 +97,5 @@
+   return useCallback(async () => {
+     await qc.cancelQueries();
+     qc.clear();
+-    await supabase.auth.signOut();
++    removeAuthToken();
+     navigate({ to: "/auth", replace: true });

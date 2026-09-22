@@ -1,0 +1,45 @@
+--- ai-encyclopedia-hub/src/routes/_authenticated/admin.tsx
++++ ai-encyclopedia-hub/src/routes/_authenticated/admin.tsx
+@@ -21,6 +21,7 @@
+ } from "lucide-react";
+-import { supabase } from "@/integrations/supabase/client";
++import { removeAuthToken } from "@/lib/api";
++import { useSessionUser, useRoles, useSignOut } from "@/lib/session";
+ import { Button } from "@/components/ui/button";
+ import { Brand } from "@/components/brand";
+@@ -84,28 +85,14 @@
+ 
+-  useEffect(() => {
+-    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
+-  }, []);
++  const { data: user } = useSessionUser();
++  const { isAdmin, isLoading } = useRoles();
++  const signOut = useSignOut();
+ 
+-  const { data: isAdmin, isLoading } = useQuery({
+-    queryKey: ["is-admin"],
+-    queryFn: async () => {
+-      const { data: userData } = await supabase.auth.getUser();
+-      if (!userData.user) return false;
+-      const { data, error } = await supabase.rpc("has_role", {
+-        _user_id: userData.user.id,
+-        _role: "admin",
+-      });
+-      if (error) throw error;
+-      return Boolean(data);
+-    },
+-  });
+-
+-  async function signOut() {
+-    await qc.cancelQueries();
+-    qc.clear();
+-    await supabase.auth.signOut();
+-    navigate({ to: "/auth", replace: true });
+-  }
++  useEffect(() => {
++    if (user?.email) {
++      setEmail(user.email);
++    }
++  }, [user]);
+ 
+   const current = SECTIONS.find((s) => s.id === section)!;

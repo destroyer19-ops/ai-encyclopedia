@@ -23,4 +23,9 @@ export class UsersController {
   updateProfile(@Request() req: { user: any }, @Body() body: UpdateProfileDto) {
     return this.usersService.updateProfile(req.user.userId, body);
   }
+
+  @Get('me/payments')
+  getPayments(@Request() req: { user: any }) {
+    return this.usersService.getPayments(req.user.userId);
+  }
 }

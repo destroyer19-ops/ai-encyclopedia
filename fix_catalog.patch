@@ -1,0 +1,169 @@
+--- ai-encyclopedia-hub/src/lib/catalog.ts
++++ ai-encyclopedia-hub/src/lib/catalog.ts
+@@ -1,7 +1,7 @@
+ import { useQuery } from "@tanstack/react-query";
+-import { supabase } from "@/integrations/supabase/client";
+ import { mediaSrc } from "@/lib/cms";
+ import { getCourseImage } from "@/data/course-images";
+ import { useSessionUser } from "@/lib/session";
++import { apiFetch } from "@/lib/api";
+ 
+@@ -51,113 +51,70 @@
+   return useQuery({
+     queryKey: ["categories"],
+     staleTime: 5 * 60_000,
+     queryFn: async (): Promise<Category[]> => {
+-      const { data, error } = await supabase
+-        .from("categories")
+-        .select("id, name, slug, icon, sort_order")
+-        .order("sort_order");
+-      if (error) throw error;
+-      return (data ?? []) as Category[];
++      // Return a static list or fetch from API if backend supports categories
++      return await apiFetch("/categories").catch(() => []);
+     },
+   });
+ }
+ 
+ /** All published courses. Filtering, search and sorting happen on top of this list. */
+ export function usePublishedCourses() {
+   return useQuery({
+     queryKey: ["catalog-courses"],
+     staleTime: 60_000,
+     queryFn: async (): Promise<CatalogCourse[]> => {
+-      const { data, error } = await supabase
+-        .from("courses")
+-        .select(COURSE_COLUMNS)
+-        .eq("published", true)
+-        .eq("status", "published")
+-        .order("sort_order")
+-        .limit(500);
+-      if (error) throw error;
+-      return (data ?? []) as unknown as CatalogCourse[];
++      const data = await apiFetch("/courses");
++      return data.map(mapCourseToCatalog);
+     },
+   });
+ }
+ 
+ export function useCourseBySlug(slug: string) {
+   return useQuery({
+     queryKey: ["catalog-course", slug],
+     staleTime: 60_000,
+     queryFn: async (): Promise<CatalogCourse | null> => {
+-      const { data, error } = await supabase
+-        .from("courses")
+-        .select(COURSE_COLUMNS)
+-        .eq("slug", slug)
+-        .eq("published", true)
+-        .eq("status", "published")
+-        .maybeSingle();
+-      if (error) throw error;
+-      return (data as unknown as CatalogCourse) ?? null;
++      // We use youth persona as default, or we can use another backend endpoint for search by slug
++      const data = await apiFetch(`/courses/youth/${slug}`).catch(() => null);
++      return data ? mapCourseToCatalog(data) : null;
+     },
+   });
+ }
+ 
+ /** Public module outline: titles and durations only, never lesson content. */
+ export function useCourseOutline(courseId: string | undefined) {
+   return useQuery({
+     queryKey: ["course-outline", courseId ?? null],
+     enabled: Boolean(courseId),
+     staleTime: 60_000,
+     queryFn: async () => {
+-      const { data, error } = await supabase.rpc("course_outline", { _course_id: courseId! });
+-      if (error) throw error;
+-      return (data ?? []) as Array<{
++      // We will map from backend modules if available
++      const data = await apiFetch(`/courses/youth/${courseId}`).catch(() => null); // Fallback if outline not in backend
++      return (data?.modules ?? []) as Array<{
+         id: string;
+         title: string;
+         sort_order: number;
+         content_type: string;
+         duration_minutes: number;
+       }>;
+     },
+   });
+ }
+ 
+ /** Full-text search over title, description, author and category name. */
+ export function useSearchIds(term: string) {
+   const q = term.trim();
+   return useQuery({
+     queryKey: ["course-search", q],
+     enabled: q.length > 0,
+     staleTime: 30_000,
+     queryFn: async (): Promise<string[]> => {
+-      const { data, error } = await supabase.rpc("search_course_ids", { _q: q });
+-      if (error) throw error;
+-      return (data ?? []).map((r: { course_id: string }) => r.course_id);
++      const data = await apiFetch(`/courses?search=${encodeURIComponent(q)}`).catch(() => []);
++      return data.map((c: any) => c.id);
+     },
+   });
+ }
+ 
+ /** Prices are readable only by signed-in users; guests get an empty map. */
+ export function useCoursePrices() {
+   const { data: user } = useSessionUser();
+   const signedIn = Boolean(user);
+   const query = useQuery({
+     queryKey: ["course-prices", user?.id ?? null],
+     enabled: signedIn,
+     staleTime: 60_000,
+     queryFn: async (): Promise<Record<string, CoursePrice>> => {
+-      const { data, error } = await supabase
+-        .from("course_prices")
+-        .select("course_id, price_cents, currency");
+-      if (error) throw error;
+-      const out: Record<string, CoursePrice> = {};
+-      for (const row of data ?? [])
+-        out[row.course_id] = { price_cents: Number(row.price_cents), currency: row.currency };
+-      return out;
++      const courses = await apiFetch("/courses").catch(() => []);
++      const out: Record<string, CoursePrice> = {};
++      for (const c of courses) {
++        out[c.id] = { price_cents: c.price || 0, currency: "USD" };
++      }
++      return out;
+     },
+   });
+   return { signedIn, prices: query.data ?? {}, isLoading: query.isLoading };
+ }
+ 
++function mapCourseToCatalog(backendCourse: any): CatalogCourse {
++  return {
++    id: backendCourse.id,
++    slug: backendCourse.slug,
++    title: backendCourse.title,
++    summary: backendCourse.description || "",
++    overview: backendCourse.overview || "",
++    image_url: backendCourse.imageUrl || "",
++    tone: backendCourse.tone || "bg-sky",
++    level: backendCourse.level || "beginner",
++    tier: backendCourse.tier || "Basic",
++    country: backendCourse.country || "Global",
++    course_level: "beginner",
++    language: "en",
++    delivery: "online",
++    duration_hours: 0,
++    pass_mark: 0,
++    sequential_modules: false,
++    require_assessment: false,
++    author_name: "Admin",
++    author_avatar_url: "",
++    category_id: backendCourse.category || null,
++    enrollment_count: 0,
++    rating: null,
++    created_at: backendCourse.createdAt || new Date().toISOString(),
++    published_at: null,
++    outcomes: backendCourse.outcomes || [],
++    sessions: backendCourse.sessions || []
++  };
++}
++
+ export function formatPrice(price: CoursePrice | undefined, locale = "en") {

@@ -32,4 +32,22 @@ export class UsersService {
       },
     });
   }
+
+  async getPayments(userId: string) {
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: { userId, paymentStatus: { not: 'unpaid' } },
+      include: { course: true },
+      orderBy: { startedAt: 'desc' },
+      take: 20
+    });
+    return enrollments.map(e => ({
+      id: e.id,
+      reference: e.id,
+      status: e.paymentStatus === 'under_review' ? 'pending' : e.paymentStatus,
+      amount_kobo: (e.course?.price || 0) * 1500,
+      created_at: e.startedAt,
+      rejection_reason: null,
+      course_id: e.courseId
+    }));
+  }
 }

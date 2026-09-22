@@ -125,6 +125,47 @@ export class EnrollmentsService {
     }
   }
 
+  async getEnrollmentById(userId: string, courseId: string) {
+    let course = await this.prisma.course.findUnique({
+      where: { id: courseId },
+      select: { id: true, title: true, slug: true, persona: true, price: true },
+    });
+    if (!course) throw new NotFoundException('Course not found.');
+
+    const enrollment = await this.prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId, courseId } },
+      include: {
+        course: { select: { id: true, title: true, slug: true, persona: true, price: true } },
+      },
+    });
+
+    return {
+      enrolled: Boolean(enrollment),
+      enrollment,
+      course,
+    };
+  }
+
+  async enrollById(userId: string, courseId: string) {
+    const { enrolled, course } = await this.getEnrollmentById(userId, courseId);
+    if (enrolled) throw new ConflictException('You are already enrolled in this course.');
+
+    try {
+      return await this.prisma.enrollment.create({
+        data: { userId, courseId: course.id },
+        include: {
+          course: { select: { id: true, title: true, slug: true, persona: true, price: true } },
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ConflictException('You are already enrolled in this course.');
+      }
+      this.logUnexpectedError(`Failed to create enrollment`, error);
+      throw new InternalServerErrorException('Unable to complete enrollment. Please try again.');
+    }
+  }
+
   private logUnexpectedError(message: string, error: unknown) {
     this.logger.error(
       message,

@@ -10,136 +10,295 @@ datasource db {
 model User {
   id               String       @id @default(uuid())
   email            String       @unique
-  passwordHash     String?
-  authProvider     String       // "google" | "local"
-  role             String       @default("learner") // "learner" | "admin"
+  passwordHash     String?      @map("password_hash")
+  authProvider     String       @map("auth_provider")
+  role             String       @default("learner")
   gender           String?
-  birthYear        Int?
+  birthYear        Int?         @map("birth_year")
   nationality      String?
-  employmentStatus String?
-  persona          String?      // Youth | Parents | Educators | MasterTrainers
+  employmentStatus String?      @map("employment_status")
+  persona          String?
   enrollments      Enrollment[]
   submissions      AssignmentSubmission[]
-  createdAt        DateTime     @default(now())
+  createdAt        DateTime     @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+model UserRole {
+  id      String @id @default(uuid())
+  userId  String @map("user_id")
+  role    String
+
+  @@map("user_roles")
+}
+
+model Profile {
+  id        String   @id @default(uuid())
+  email     String
+  firstName String?  @map("first_name")
+  lastName  String?  @map("last_name")
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("profiles")
+}
+
+model EducatorProfile {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id") @unique
+  displayName   String?  @map("display_name")
+  bankName      String?  @map("bank_name")
+  accountNumber String?  @map("account_number")
+  accountName   String?  @map("account_name")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("educator_profiles")
+}
+
+model EducatorApplication {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  status    String   @default("pending")
+  nin       String?
+  cvUrl     String?  @map("cv_url")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("educator_applications")
+}
+
+model EducatorApplicationSecret {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id") @unique
+  nin       String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("educator_application_secrets")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  actorId   String   @map("actor_id")
+  action    String
+  entity    String
+  entityId  String   @map("entity_id")
+  details   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("audit_log")
 }
 
 model Course {
-  id          String       @id @default(uuid())
-  slug        String
-  persona     String       @default("youth")
-  title       String
-  category    String       @default("01")
-  description String       @db.Text
-  overview    String?      @db.Text
-  tone        String       @default("bg-sky")
-  imageUrl    String?
-  ecardUrl    String?
-  status      String       @default("draft") // "draft" | "published"
-  isPublished Boolean      @default(true)
-  sortOrder   Int          @default(0)
-  country     String       @default("Global") // e.g. "Nigeria", "Ghana", "Global"
-  tier        String?                          // "Basic" | "Intermediate" | "Advanced"
-  price       Int?                             // Add price field
-  outcomes    Json?
-  sessions    Json?
-  modules     Module[]
-  enrollments Enrollment[]
+  id                 String       @id @default(uuid())
+  slug               String
+  persona            String       @default("youth")
+  title              String
+  category           String?      @default("01") @map("category_id")
+  description        String       @db.Text @map("summary")
+  overview           String?      @db.Text
+  tone               String       @default("bg-sky")
+  imageUrl           String?      @map("image_url")
+  ecardUrl           String?      @map("ecard_url")
+  status             String       @default("draft")
+  isPublished        Boolean      @default(true) @map("published")
+  featured           Boolean      @default(false)
+  sortOrder          Int          @default(0) @map("sort_order")
+  country            String       @default("Global")
+  tier               String?
+  price              Int?         @map("price")
+  outcomes           Json?
+  sessions           Json?
+  
+  // Added fields from frontend
+  educatorId         String?      @map("educator_id")
+  authorName         String?      @map("author_name")
+  authorAvatarUrl    String?      @map("author_avatar_url")
+  courseLevel        String?      @default("beginner") @map("course_level")
+  language           String?      @default("English") @map("language")
+  delivery           String?      @default("online") @map("delivery")
+  durationHours      Int?         @default(0) @map("duration_hours")
+  passMark           Int?         @default(70) @map("pass_mark")
+  sequentialModules  Boolean      @default(true) @map("sequential_modules")
+  requireAssessment  Boolean      @default(true) @map("require_assessment")
+  rejectionReason    String?      @map("rejection_reason")
+  createdAt          DateTime     @default(now()) @map("created_at")
+
+  modules            Module[]
+  enrollments        Enrollment[]
 
   @@unique([persona, slug])
+  @@map("courses")
+}
+
+model CourseRevision {
+  id        String   @id @default(uuid())
+  courseId  String   @map("course_id")
+  status    String   @default("pending")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("course_revisions")
+}
+
+model CourseMaterial {
+  id          String   @id @default(uuid())
+  courseId    String   @map("course_id")
+  title       String
+  description String?
+  fileUrl     String?  @map("file_url")
+  fileType    String?  @map("file_type")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("course_materials")
+}
+
+model CourseAnnouncement {
+  id         String   @id @default(uuid())
+  courseId   String   @map("course_id")
+  educatorId String   @map("educator_id")
+  title      String
+  body       String   @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("course_announcements")
 }
 
 model Training {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   title           String
-  summary         String   @db.Text
+  summary         String    @db.Text
   country         String
-  city            String   @default("")
-  venue           String   @default("")
-  eventDate       DateTime? @db.Date
-  endDate         DateTime? @db.Date
-  eventTime       String   @default("")
-  format          String   @default("In person")
-  registrationUrl String   @default("")
-  imageUrl        String   @default("")
-  published       Boolean  @default(true)
-  sortOrder       Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  city            String    @default("")
+  venue           String    @default("")
+  eventDate       DateTime? @db.Date @map("event_date")
+  endDate         DateTime? @db.Date @map("end_date")
+  eventTime       String    @default("") @map("event_time")
+  format          String    @default("In person")
+  registrationUrl String    @default("") @map("registration_url")
+  imageUrl        String    @default("") @map("image_url")
+  published       Boolean   @default(true)
+  sortOrder       Int       @default(0) @map("sort_order")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("trainings")
 }
 
 model Module {
-  id          String   @id @default(uuid())
-  courseId    String
-  title       String
-  order       Int
-  contentType String   // "video" | "text" | "quiz"
-  contentUrl  String?  // S3 object key (not a full URL) for secure video delivery
-  contentBody String?  @db.Text
-  contentMeta Json?
-  duration    Int?     // length in seconds — used to show "5 min video" in the UI
-  isPublished Boolean  @default(true) // admin can draft a module before making it visible
-  course      Course   @relation(fields: [courseId], references: [id])
-  completions ModuleCompletion[]
-  assignment  Assignment?
+  id              String   @id @default(uuid())
+  courseId        String   @map("course_id")
+  title           String
+  order           Int      @map("sort_order")
+  contentType     String   @map("content_type")
+  contentUrl      String?  @map("content_url")
+  videoUrl        String?  @map("video_url")
+  fileUrl         String?  @map("file_url")
+  contentBody     String?  @db.Text @map("content")
+  contentMeta     Json?    @map("content_meta")
+  durationMinutes Int?     @map("duration_minutes")
+  isPublished     Boolean  @default(true) @map("is_published")
+  course          Course   @relation(fields: [courseId], references: [id])
+  completions     ModuleCompletion[]
+  assignment      Assignment?
+
+  @@map("modules")
 }
 
 model Assignment {
   id              String   @id @default(uuid())
-  moduleId        String   @unique
+  moduleId        String   @unique @map("module_id")
   title           String
   description     String   @db.Text
-  attachmentUrl   String?
-  submissionType  String   @default("text") // "text" | "file" | "both"
-  dueDate         DateTime?
-  maxScore        Int?
-  passMark        Int?
-  isRequired      Boolean  @default(false)
-  isEnabled       Boolean  @default(true)
+  attachmentUrl   String?  @map("attachment_url")
+  submissionType  String   @default("text") @map("submission_type")
+  dueDate         DateTime? @map("due_date")
+  maxScore        Int?     @map("max_score")
+  passMark        Int?     @map("pass_mark")
+  isRequired      Boolean  @default(false) @map("is_required")
+  isEnabled       Boolean  @default(true) @map("is_enabled")
   module          Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   submissions     AssignmentSubmission[]
+
+  @@map("assignments")
 }
 
 model AssignmentSubmission {
   id           String   @id @default(uuid())
-  assignmentId String
-  userId       String
+  assignmentId String   @map("assignment_id")
+  userId       String   @map("user_id")
   content      String?  @db.Text
-  fileUrl      String?
-  status       String   @default("submitted") // "submitted" | "graded" | "returned"
+  fileUrl      String?  @map("file_url")
+  status       String   @default("submitted")
   score        Int?
   feedback     String?  @db.Text
-  submittedAt  DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  submittedAt  DateTime @default(now()) @map("submitted_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
   assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([assignmentId, userId])
+  @@map("assignment_submissions")
 }
 
 model Enrollment {
   id              String    @id @default(uuid())
-  userId          String
-  courseId        String
-  progressPct     Int       @default(0)
-  startedAt       DateTime  @default(now())
-  completedAt     DateTime?
-  paymentStatus   String    @default("unpaid") // "unpaid" | "under_review" | "approved" | "rejected"
-  paymentProofUrl String?
+  userId          String    @map("user_id")
+  courseId        String    @map("course_id")
+  progressPct     Int       @default(0) @map("progress_pct")
+  startedAt       DateTime  @default(now()) @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  paymentStatus   String    @default("unpaid") @map("payment_status")
+  paymentProofUrl String?   @map("payment_proof_url")
   user            User      @relation(fields: [userId], references: [id])
   course          Course    @relation(fields: [courseId], references: [id])
 
   @@unique([userId, courseId])
+  @@map("enrollments")
 }
 
-// Replaces the Postgres-only String[] "completedModuleIds" field.
-// Join table: one row per module a user has finished. Also gives you
-// a clean source for module-level drop-off analytics later.
 model ModuleCompletion {
   id          String   @id @default(uuid())
-  userId      String
-  moduleId    String
-  completedAt DateTime @default(now())
+  userId      String   @map("user_id")
+  moduleId    String   @map("module_id")
+  completedAt DateTime @default(now()) @map("completed_at")
   module      Module   @relation(fields: [moduleId], references: [id])
 
   @@unique([userId, moduleId])
+  @@map("module_completions")
+}
+
+model PayoutRequest {
+  id                 String   @id @default(uuid())
+  educatorId         String   @map("educator_id")
+  amountKobo         Int      @map("amount_kobo")
+  status             String
+  bankSnapshot       Json     @map("bank_snapshot")
+  dueBy              DateTime @map("due_by")
+  transferReference  String?  @map("transfer_reference")
+  rejectionReason    String?  @map("rejection_reason")
+  processedAt        DateTime? @map("processed_at")
+  processedBy        String?  @map("processed_by")
+  requestedAt        DateTime @default(now()) @map("requested_at")
+
+  @@map("payout_requests")
+}
+
+model LedgerEntry {
+  id              String   @id @default(uuid())
+  paymentId       String?  @map("payment_id")
+  courseId        String?  @map("course_id")
+  educatorId      String   @map("educator_id")
+  party           String
+  status          String
+  amountKobo      Int      @map("amount_kobo")
+  grossKobo       Int      @map("gross_kobo")
+  gatewayFeeKobo  Int      @map("gateway_fee_kobo")
+  netKobo         Int      @map("net_kobo")
+  splitPct        Int      @map("split_pct")
+  availableAt     DateTime @map("available_at")
+  note            String?
+  payoutRequestId String?  @map("payout_request_id")
+
+  @@map("ledger_entries")
 }

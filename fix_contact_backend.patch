@@ -1,0 +1,27 @@
+--- backend/src/app.controller.ts
++++ backend/src/app.controller.ts
+@@ -1,9 +1,11 @@
+-import { Controller, Get } from '@nestjs/common';
++import { Controller, Get, Post, Body } from '@nestjs/common';
+ import { AppService } from './app.service.js';
+ import { Public } from './common/decorators/public.decorator.js';
++import { PrismaService } from './prisma/prisma.service.js';
+ 
+ @Controller()
+ export class AppController {
+-  constructor(private readonly appService: AppService) {}
++  constructor(private readonly appService: AppService, private readonly prisma: PrismaService) {}
+ 
+   @Public()
+   @Get()
+@@ -11,4 +13,10 @@
+   getHello(): string {
+     return this.appService.getHello();
+   }
++
++  @Public()
++  @Post('contact')
++  async submitContact(@Body() data: any) {
++    return this.prisma.contactMessage.create({ data });
++  }
+ }

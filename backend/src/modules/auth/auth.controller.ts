@@ -23,4 +23,16 @@ export class AuthController {
   async register(@Body() body: RegisterDto) {
     return this.authService.register(body);
   }
+
+  @Public()
+  @Post('request-password-reset')
+  async requestPasswordReset(@Body() body: { email: string }) {
+    return this.authService.requestPasswordReset(body.email);
+  }
+
+  @Public()
+  @Post('reset-password')
+  async resetPassword(@Body() body: { token: string; password: string }) {
+    return this.authService.resetPassword(body.token, body.password);
+  }
 }

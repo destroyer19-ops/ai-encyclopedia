@@ -14,6 +14,53 @@ export class adminCourseServices {
   private normalizePublishFields(dto: any) {
     const next = { ...dto };
 
+    if (next.summary !== undefined && next.description === undefined) {
+      next.description = next.summary;
+    }
+    if (next.image_url !== undefined && next.imageUrl === undefined) {
+      next.imageUrl = next.image_url;
+    }
+    if (next.sort_order !== undefined && next.sortOrder === undefined) {
+      next.sortOrder = Number(next.sort_order ?? 0);
+    }
+    if (next.published !== undefined && next.isPublished === undefined) {
+      next.isPublished = Boolean(next.published);
+    }
+    if (next.published !== undefined && next.status === undefined) {
+      next.status = next.published ? 'published' : 'draft';
+    }
+    if (next.level !== undefined) {
+      delete next.level;
+    }
+
+    // Map new frontend snake_case fields to Prisma camelCase fields
+    if (next.course_level !== undefined) next.courseLevel = next.course_level;
+    if (next.language !== undefined) next.language = next.language;
+    if (next.delivery !== undefined) next.delivery = next.delivery;
+    if (next.duration_hours !== undefined) next.durationHours = Number(next.duration_hours);
+    if (next.pass_mark !== undefined) next.passMark = Number(next.pass_mark);
+    if (next.sequential_modules !== undefined) next.sequentialModules = Boolean(next.sequential_modules);
+    if (next.require_assessment !== undefined) next.requireAssessment = Boolean(next.require_assessment);
+    if (next.educator_id !== undefined) next.educatorId = next.educator_id;
+    if (next.author_name !== undefined) next.authorName = next.author_name;
+    if (next.author_avatar_url !== undefined) next.authorAvatarUrl = next.author_avatar_url;
+    if (next.rejection_reason !== undefined) next.rejectionReason = next.rejection_reason;
+
+    // Delete snake_case keys so they don't break Prisma
+    delete next.summary;
+    delete next.image_url;
+    delete next.sort_order;
+    delete next.published;
+    delete next.sequential_modules;
+    delete next.require_assessment;
+    delete next.course_level;
+    delete next.duration_hours;
+    delete next.pass_mark;
+    delete next.educator_id;
+    delete next.author_name;
+    delete next.author_avatar_url;
+    delete next.rejection_reason;
+
     if (typeof next.isPublished === 'boolean' && next.status === undefined) {
       next.status = next.isPublished ? 'published' : 'draft';
     }
@@ -43,9 +90,26 @@ export class adminCourseServices {
   }
 
   async getCourses() {
-    return this.prisma.course.findMany({
+    const rows = await this.prisma.course.findMany({
       orderBy: { sortOrder: 'asc' },
     });
+    return rows.map((course) => ({
+      ...course,
+      summary: course.description,
+      image_url: course.imageUrl,
+      published: course.status === 'published' || course.isPublished,
+      sort_order: course.sortOrder,
+      sequential_modules: course.sequentialModules ?? true,
+      require_assessment: course.requireAssessment ?? false,
+      course_level: course.courseLevel,
+      delivery: course.delivery,
+      duration_hours: course.durationHours,
+      pass_mark: course.passMark,
+      educator_id: course.educatorId,
+      author_name: course.authorName,
+      author_avatar_url: course.authorAvatarUrl,
+      rejection_reason: course.rejectionReason,
+    }));
   }
 
   async createModule(courseId: string, dto: CreateModuleDto) {

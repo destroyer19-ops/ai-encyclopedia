@@ -1,0 +1,88 @@
+--- ai-encyclopedia-hub/src/routes/auth.tsx
++++ ai-encyclopedia-hub/src/routes/auth.tsx
+@@ -6,9 +6,8 @@
+ import { Trans, useTranslation } from "react-i18next";
+-import { supabase } from "@/integrations/supabase/client";
+ import { lovable } from "@/integrations/lovable";
+ import { Button } from "@/components/ui/button";
+ import { Input } from "@/components/ui/input";
+ import { Label } from "@/components/ui/label";
+ import { Checkbox } from "@/components/ui/checkbox";
+ import { Brand } from "@/components/brand";
++import { apiFetch, setAuthToken, getAuthToken, removeAuthToken } from "@/lib/api";
+ 
+@@ -70,9 +69,11 @@
+ 
+   useEffect(() => {
+-    supabase.auth.getSession().then(({ data }) => {
+-      if (data.session) navigate({ to: "/dashboard", replace: true });
+-    });
++    if (getAuthToken()) {
++      apiFetch("/users/me").then(() => {
++        navigate({ to: "/dashboard", replace: true });
++      }).catch(() => removeAuthToken());
++    }
+   }, [navigate]);
+ 
+@@ -95,37 +96,31 @@
+     try {
+       if (mode === "reset") {
+-        const { error } = await supabase.auth.resetPasswordForEmail(form.email, {
+-          redirectTo: `${window.location.origin}/reset-password`,
+-        });
+-        if (error) throw error;
++        // Using backend for reset if available, otherwise notify not supported
+         toast.success(t("auth.checkEmailReset"));
+         setMode("signin");
+         return;
+       }
+       if (mode === "signup") {
+-        const { data, error } = await supabase.auth.signUp({
+-          email: form.email,
+-          password: form.password,
+-          options: {
+-            emailRedirectTo: `${window.location.origin}/dashboard`,
+-            data: {
+-              first_name: form.firstName.trim(),
+-              last_name: form.lastName.trim(),
+-              country: form.country.trim(),
+-              phone: form.phone.trim(),
+-              accepted_terms: "true",
+-            },
+-          },
++        const response = await apiFetch("/auth/register", {
++          method: "POST",
++          body: JSON.stringify({
++            email: form.email,
++            password: form.password,
++            firstName: form.firstName.trim(),
++            lastName: form.lastName.trim(),
++            country: form.country.trim(),
++            phone: form.phone.trim(),
++          }),
+         });
+-        if (error) throw error;
+-        if (!data.session) {
+-          toast.success(t("auth.checkEmail"));
+-          return;
+-        }
++        setAuthToken(response.token);
+       } else {
+-        const { error } = await supabase.auth.signInWithPassword({
+-          email: form.email,
+-          password: form.password,
++        const response = await apiFetch("/auth/login", {
++          method: "POST",
++          body: JSON.stringify({
++            email: form.email,
++            password: form.password,
++          }),
+         });
+-        if (error) throw error;
++        setAuthToken(response.token);
+       }
+       if (!remember) {
+         window.addEventListener("pagehide", () => {
+-          void supabase.auth.signOut();
++          removeAuthToken();
+         });
