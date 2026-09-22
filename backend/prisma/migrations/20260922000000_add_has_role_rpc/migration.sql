@@ -1,14 +1,5 @@
--- Create the has_role RPC function for Supabase
-CREATE OR REPLACE FUNCTION public.has_role(_user_id uuid, _role text)
-RETURNS boolean AS $$
-DECLARE
-    role_exists boolean;
-BEGIN
-    SELECT EXISTS(
-        SELECT 1 FROM public.user_roles 
-        WHERE user_id = _user_id AND role = _role
-    ) INTO role_exists;
-    
-    RETURN role_exists;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+-- has_role is a PostgreSQL/Supabase RPC function used by the frontend's
+-- server-side Supabase client. It does not apply to the MySQL backend.
+-- Authorization in NestJS is handled by JwtAuthGuard + RolesGuard.
+-- This migration is intentionally a no-op for MySQL/MariaDB compatibility.
+SELECT 1;
