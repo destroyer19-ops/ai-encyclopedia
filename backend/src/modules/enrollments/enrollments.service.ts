@@ -146,17 +146,52 @@ export class EnrollmentsService {
     };
   }
 
-  async enrollById(userId: string, courseId: string) {
+  async enrollById(userId: string, courseId: string, method?: string) {
     const { enrolled, course } = await this.getEnrollmentById(userId, courseId);
-    if (enrolled) throw new ConflictException('You are already enrolled in this course.');
+    if (enrolled) return { kind: 'enrolled' };
 
     try {
-      return await this.prisma.enrollment.create({
-        data: { userId, courseId: course.id },
-        include: {
-          course: { select: { id: true, title: true, slug: true, persona: true, price: true } },
+      const price = course.price ?? 0;
+      const isFree = price <= 0;
+
+      const enrollment = await this.prisma.enrollment.create({
+        data: {
+          userId,
+          courseId: course.id,
+          status: isFree ? 'active' : 'pending',
+          paymentStatus: isFree ? 'none' : 'pending',
         },
       });
+
+      if (isFree) {
+        return { kind: 'enrolled' };
+      }
+
+      const amountKobo = price * 1500; // Hardcoded mock rate like frontend
+      
+      if (method === 'bank_transfer') {
+        return {
+          kind: 'bank_transfer',
+          reference: enrollment.id,
+          amountKobo,
+          bank: {
+            enabled: true,
+            bank_name: 'Mock Bank',
+            account_name: 'AI Encyclovia',
+            account_number: '0000000000',
+            instructions: 'Transfer to this account',
+          },
+        };
+      }
+
+      // If method === 'paystack', we would normally call Paystack API here
+      // For now, return a checkout kind with a dummy URL that redirects to callback
+      return {
+        kind: 'checkout',
+        reference: enrollment.id,
+        url: `https://checkout.paystack.com/dummy`, // In real app, initialize paystack transaction here
+      };
+
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new ConflictException('You are already enrolled in this course.');

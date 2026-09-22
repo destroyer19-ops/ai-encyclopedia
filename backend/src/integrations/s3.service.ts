@@ -52,7 +52,8 @@ export class S3Service {
     return {
       uploadUrl,
       finalUrl: `${this.publicBaseUrl.replace(/\/$/, '')}/${key}`,
-      key, // Return the key as well, in case callers want to store just the key
+      key,
+      fileKey: key,
     };
   }
 

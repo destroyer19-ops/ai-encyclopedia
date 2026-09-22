@@ -56,6 +56,17 @@ export class AuthService {
         persona: data.persona || 'Youth',
       },
     });
+
+    await this.prisma.profile.create({
+      data: {
+        id: registerUser.id,
+        email: registerUser.email,
+        firstName: data.firstName?.trim() || null,
+        lastName: data.lastName?.trim() || null,
+        country: data.country?.trim() || null,
+        phone: data.phone?.trim() || null,
+      },
+    });
     
     // Automatically log the user in after registration
     return this.login(registerUser);
@@ -85,5 +96,34 @@ export class AuthService {
     } catch (e) {
       throw new BadRequestException('Invalid or expired password reset token');
     }
+  }
+
+  async validateOrCreateGoogleUser(profile: { googleId: string, email: string, firstName: string, lastName: string, avatarUrl: string }) {
+    let user = await this.prisma.user.findUnique({ where: { email: profile.email } });
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          email: profile.email,
+          authProvider: 'google',
+          role: 'learner',
+          persona: 'Youth',
+        }
+      });
+      await this.prisma.profile.create({
+        data: {
+          id: user.id,
+          email: user.email,
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          avatarUrl: profile.avatarUrl,
+        }
+      });
+    } else {
+      if (user.authProvider !== 'google') {
+        // Link accounts or keep it as is, frontend auth might expect 'local' or 'google'. 
+        // We just return it to allow signin.
+      }
+    }
+    return user;
   }
 }

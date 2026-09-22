@@ -17,4 +17,20 @@ export class RegisterDto {
   @IsOptional()
   @IsEnum(['Youth', 'Parents', 'Educators', 'MasterTrainers'])
   persona?: string;
+
+  @IsOptional()
+  @IsString()
+  firstName?: string;
+
+  @IsOptional()
+  @IsString()
+  lastName?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
 }

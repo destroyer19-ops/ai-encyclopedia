@@ -116,7 +116,7 @@ function sanitizeModuleForLearner(module: any) {
       module.contentType === 'quiz'
         ? sanitizeQuizForLearner(module.contentMeta)
         : null,
-    duration: module.duration,
+    duration: module.durationMinutes,
     isPublished: module.isPublished,
   };
 }
@@ -203,22 +203,24 @@ export class ModuleServices {
         contentUrl: data.contentUrl,
         contentBody: data.contentType === 'text' ? sanitizeHtml(data.contentBody) : data.contentBody,
         contentMeta: toPrismaJson(data.contentMeta),
-        duration: data.duration,
+        durationMinutes: data.duration,
         isPublished: data.isPublished,
         courseId,
       },
     });
   }
 
-  async update(courseId: string, moduleId: string, data: Partial<{ title: string; order: number; contentType: string; contentUrl: string | null; contentBody: string | null; contentMeta: unknown; duration: number | null; isPublished: boolean }>) {
+  async update(courseId: string, moduleId: string, data: Partial<{ title: string; order: number; contentType: string; contentUrl: string | null; contentBody: string | null; contentMeta: unknown; duration: number | null; durationMinutes: number | null; isPublished: boolean }>) {
     const existing = await this.prisma.module.findFirst({
       where: { id: moduleId, courseId },
     });
     if (!existing) throw new NotFoundException('Module not found');
     if (data.contentType) assertContentType(data.contentType);
     const nextType = data.contentType ?? existing.contentType;
+    const { duration, ...rest } = data;
     const updateData: Prisma.ModuleUncheckedUpdateInput = {
-      ...data,
+      ...rest,
+      ...(duration !== undefined && { durationMinutes: duration }),
       contentMeta: toPrismaJson(data.contentMeta),
       contentBody: nextType === 'text' ? sanitizeHtml(data.contentBody) : data.contentBody,
     };

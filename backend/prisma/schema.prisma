@@ -20,7 +20,9 @@ model User {
   persona          String?
   enrollments      Enrollment[]
   submissions      AssignmentSubmission[]
+  certificates     Certificate[]
   createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
 
   @@map("users")
 }
@@ -39,7 +41,12 @@ model Profile {
   firstName String?  @map("first_name")
   lastName  String?  @map("last_name")
   avatarUrl String?  @map("avatar_url")
+  country   String?
+  phone     String?
+  theme     String   @default("system")
+  locale    String   @default("en")
   createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("profiles")
 }
@@ -58,12 +65,28 @@ model EducatorProfile {
 }
 
 model EducatorApplication {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  status    String   @default("pending")
-  nin       String?
-  cvUrl     String?  @map("cv_url")
-  createdAt DateTime @default(now()) @map("created_at")
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  applicantType   String   @default("individual") @map("applicant_type")
+  fullName        String   @default("") @map("full_name")
+  orgName         String   @default("") @map("org_name")
+  cacNumber       String   @default("") @map("cac_number")
+  bio             String   @default("")
+  expertise       Json?
+  sampleLinks     Json?    @map("sample_links")
+  phone           String   @default("")
+  ninLast4        String   @default("") @map("nin_last4")
+  bankCode        String   @default("") @map("bank_code")
+  bankName        String   @default("") @map("bank_name")
+  accountNumber   String   @default("") @map("account_number")
+  accountName     String   @default("") @map("account_name")
+  accountVerified Boolean  @default(false) @map("account_verified")
+  status          String   @default("pending")
+  rejectionReason String?  @map("rejection_reason")
+  nin             String?
+  cvUrl           String?  @map("cv_url")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   @@map("educator_applications")
 }
@@ -123,9 +146,15 @@ model Course {
   requireAssessment  Boolean      @default(true) @map("require_assessment")
   rejectionReason    String?      @map("rejection_reason")
   createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+  enrollmentCount    Int          @default(0) @map("enrollment_count")
+  level              String?      @default("beginner")
+  publishedAt        DateTime?    @map("published_at")
+  rating             Float?
 
   modules            Module[]
   enrollments        Enrollment[]
+  certificates       Certificate[]
 
   @@unique([persona, slug])
   @@map("courses")
@@ -185,6 +214,84 @@ model Training {
   @@map("trainings")
 }
 
+model TrainingForm {
+  id             String              @id @default(uuid())
+  slug           String              @unique
+  title          String
+  description    String              @default("") @db.Text
+  successMessage String              @default("Thanks. We received your request.") @map("success_message")
+  published      Boolean             @default(true)
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  fields         TrainingFormField[]
+  submissions    TrainingSubmission[]
+
+  @@map("training_forms")
+}
+
+model TrainingFormField {
+  id          String       @id @default(uuid())
+  formId      String       @map("form_id")
+  name        String
+  label       String
+  helpText    String       @default("") @map("help_text")
+  placeholder String       @default("")
+  kind        String       @default("short_text")
+  options     Json?
+  required    Boolean      @default(false)
+  sortOrder   Int          @default(0) @map("sort_order")
+  form        TrainingForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@map("training_form_fields")
+}
+
+model TrainingSubmission {
+  id           String       @id @default(uuid())
+  formId       String       @map("form_id")
+  trainingId   String?      @map("training_id")
+  contactEmail String       @default("") @map("contact_email")
+  answers      Json
+  status       String       @default("new")
+  adminNotes   String       @default("") @db.Text @map("admin_notes")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  form         TrainingForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@map("training_submissions")
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  title     String
+  body      String?   @db.Text
+  link      String?
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
+}
+
+model SiteContent {
+  key       String   @id
+  label     String   @default("")
+  data      Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("site_content")
+}
+
+model AppSetting {
+  key       String   @id
+  value     Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
+}
+
 model Module {
   id              String   @id @default(uuid())
   courseId        String   @map("course_id")
@@ -198,6 +305,8 @@ model Module {
   contentMeta     Json?    @map("content_meta")
   durationMinutes Int?     @map("duration_minutes")
   isPublished     Boolean  @default(true) @map("is_published")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
   course          Course   @relation(fields: [courseId], references: [id])
   completions     ModuleCompletion[]
   assignment      Assignment?
@@ -246,15 +355,41 @@ model Enrollment {
   userId          String    @map("user_id")
   courseId        String    @map("course_id")
   progressPct     Int       @default(0) @map("progress_pct")
-  startedAt       DateTime  @default(now()) @map("started_at")
+  enrolledAt      DateTime  @default(now()) @map("enrolled_at")
   completedAt     DateTime? @map("completed_at")
+  status          String    @default("active")
+  paymentId       String?   @map("payment_id")
   paymentStatus   String    @default("unpaid") @map("payment_status")
   paymentProofUrl String?   @map("payment_proof_url")
+  rejectionReason String?   @map("rejection_reason")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
   user            User      @relation(fields: [userId], references: [id])
   course          Course    @relation(fields: [courseId], references: [id])
 
   @@unique([userId, courseId])
   @@map("enrollments")
+}
+
+model Payment {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  courseId        String    @map("course_id")
+  enrollmentId    String?   @map("enrollment_id")
+  reference       String    @unique
+  method          String    @default("bank_transfer")
+  status          String    @default("pending")
+  amountKobo      Int       @default(0) @map("amount_kobo")
+  proofPath       String?   @map("proof_path")
+  payerName       String?   @map("payer_name")
+  note            String?   @db.Text
+  rejectionReason String?   @map("rejection_reason")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId, status])
+  @@index([courseId, status])
+  @@map("payments")
 }
 
 model ModuleCompletion {
@@ -301,4 +436,19 @@ model LedgerEntry {
   payoutRequestId String?  @map("payout_request_id")
 
   @@map("ledger_entries")
+}
+
+model Certificate {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  userId       String   @map("user_id")
+  courseId     String   @map("course_id")
+  courseTitle  String   @map("course_title")
+  learnerName  String   @map("learner_name")
+  issuedAt     DateTime @default(now()) @map("issued_at")
+
+  user         User     @relation(fields: [userId], references: [id])
+  course       Course   @relation(fields: [courseId], references: [id])
+
+  @@map("certificates")
 }

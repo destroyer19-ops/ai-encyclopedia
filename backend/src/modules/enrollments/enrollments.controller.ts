@@ -45,8 +45,9 @@ export class EnrollmentsController {
   async enrollById(
     @Request() req: { user: any },
     @Param('courseId') courseId: string,
+    @Body() body: { method?: string },
   ) {
-    return this.enrollmentsService.enrollById(req.user.userId, courseId);
+    return this.enrollmentsService.enrollById(req.user.userId, courseId, body?.method);
   }
 
   @Patch(':courseId/progress')

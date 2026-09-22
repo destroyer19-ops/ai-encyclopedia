@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Post, Request, Body } from '@nestjs/common';
+import { Controller, UseGuards, Post, Get, Request, Res, Body } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RegisterDto } from './dto/register.dto.js';
@@ -34,5 +34,24 @@ export class AuthController {
   @Post('reset-password')
   async resetPassword(@Body() body: { token: string; password: string }) {
     return this.authService.resetPassword(body.token, body.password);
+  }
+
+  @Public()
+  @UseGuards(AuthGuard('google'))
+  @Get('google')
+  async googleAuth(@Request() req: any) {
+    // Initiates Google OAuth
+  }
+
+  @Public()
+  @UseGuards(AuthGuard('google'))
+  @Get('google/callback')
+  async googleAuthRedirect(@Request() req: any, @Res() res: any) {
+    const tokens = this.authService.login(req.user);
+    // Redirect to the frontend /auth page with the JWT as a query param.
+    // The auth page reads access_token from the URL via useEffect on mount.
+    const frontendOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',');
+    const frontendBase = frontendOrigins[0].trim().replace(/\/$/, '');
+    res.redirect(`${frontendBase}/auth?access_token=${tokens.access_token}`);
   }
 }

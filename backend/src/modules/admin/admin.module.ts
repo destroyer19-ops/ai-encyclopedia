@@ -12,6 +12,9 @@ import { AdminEnrollmentsService } from './admin-enrollments.service.js';
 import { AdminUsersController } from './admin-users.controller.js';
 import { AdminUsersService } from './admin-users.service.js';
 
+import { AdminSettingsController } from './admin-settings.controller.js';
+import { AdminSettingsService } from './admin-settings.service.js';
+
 @Module({
   imports: [PrismaModule, AuthModule, PassportModule],
   controllers: [
@@ -21,7 +24,8 @@ import { AdminUsersService } from './admin-users.service.js';
     AdminUploadsController,
     AdminEnrollmentsController,
     AdminUsersController,
+    AdminSettingsController,
   ],
-  providers: [adminCourseServices, AdminUploadsService, S3Service, AdminEnrollmentsService, AdminUsersService],
+  providers: [adminCourseServices, AdminUploadsService, S3Service, AdminEnrollmentsService, AdminUsersService, AdminSettingsService],
 })
 export class AdminModule {}
