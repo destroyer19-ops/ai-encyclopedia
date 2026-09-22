@@ -7,6 +7,35 @@ export class CoursesService {
   // Dependency Injection: Nest automatically provides the PrismaService here
   constructor(private readonly prisma: PrismaService) {}
 
+  private readonly publicCourseSelect = {
+    id: true,
+    slug: true,
+    persona: true,
+    title: true,
+    category: true,
+    description: true,
+    overview: true,
+    tone: true,
+    imageUrl: true,
+    ecardUrl: true,
+    status: true,
+    isPublished: true,
+    sortOrder: true,
+    country: true,
+    tier: true,
+    price: true,
+    outcomes: true,
+    sessions: true,
+    level: true,
+    createdAt: true,
+    publishedAt: true,
+    modules: {
+      where: { isPublished: true },
+      orderBy: { order: 'asc' },
+      select: { id: true, title: true, contentType: true },
+    },
+  } as const;
+
   async findAll(query: QueryCoursesDto) {
     // The instructions mentioned it's a read-only route.
     // In our backend-structure.md, it notes that the public /courses endpoint
@@ -17,13 +46,7 @@ export class CoursesService {
         ...(query.persona && { persona: query.persona }),
         ...(query.category && { category: query.category }),
       },
-      include: {
-        modules: {
-          where: { isPublished: true },
-          orderBy: { order: 'asc' },
-          select: { id: true, title: true, contentType: true },
-        },
-      },
+      select: this.publicCourseSelect,
       orderBy: { title: 'asc' },
     });
   }
@@ -48,12 +71,7 @@ export class CoursesService {
         slug,
         status: 'published',
       },
-      include: {
-        modules: {
-          where: { isPublished: true },
-          orderBy: { order: 'asc' },
-        },
-      },
+      select: this.publicCourseSelect,
     });
 
     if (!course) {
