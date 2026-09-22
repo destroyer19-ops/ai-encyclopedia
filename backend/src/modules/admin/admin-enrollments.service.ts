@@ -41,7 +41,7 @@ export class AdminEnrollmentsService {
       where: { paymentStatus: 'under_review' },
       include: {
         user: { select: { id: true, email: true } },
-        course: { select: { id: true, title: true } },
+        course: { select: { id: true, title: true, price: true } },
       },
       orderBy: { enrolledAt: 'asc' },
     });
@@ -56,7 +56,8 @@ export class AdminEnrollmentsService {
 
         const firstName = profile?.firstName ?? '';
         const lastName = profile?.lastName ?? '';
-        const studentName = [firstName, lastName].filter(Boolean).join(' ') || '';
+        const studentName =
+          [firstName, lastName].filter(Boolean).join(' ') || '';
 
         // paymentProofUrl may be an S3 key or a full URL
         const proofUrl = enrollment.paymentProofUrl ?? '';
@@ -87,7 +88,10 @@ export class AdminEnrollmentsService {
    * Update the raw paymentStatus field.
    * Used by the legacy /payment-status endpoint.
    */
-  async updatePaymentStatus(enrollmentId: string, status: 'approved' | 'rejected') {
+  async updatePaymentStatus(
+    enrollmentId: string,
+    status: 'approved' | 'rejected',
+  ) {
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { id: enrollmentId },
       include: { user: true, course: true },
@@ -116,7 +120,11 @@ export class AdminEnrollmentsService {
    * This is the endpoint the payments-admin component uses when the admin
    * clicks "Approve and enrol" or "Decline".
    */
-  async reviewPaymentProof(enrollmentId: string, approve: boolean, reason: string) {
+  async reviewPaymentProof(
+    enrollmentId: string,
+    approve: boolean,
+    reason: string,
+  ) {
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { id: enrollmentId },
       include: { user: true, course: true },
