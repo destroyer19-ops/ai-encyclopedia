@@ -48,7 +48,7 @@ export class EducatorService {
   async getCourses(userId: string) {
     const rows = await this.prisma.course.findMany({
       where: { educatorId: userId },
-      include: { modules: { where: { isPublished: true }, orderBy: { sortOrder: 'asc' } } },
+      include: { modules: { where: { isPublished: true }, orderBy: { order: 'asc' } } },
       orderBy: { sortOrder: 'asc' },
     });
     
